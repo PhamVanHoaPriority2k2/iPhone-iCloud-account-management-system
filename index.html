@@ -26,6 +26,31 @@
         }
         .marquee-container { overflow: hidden; white-space: nowrap; }
         .marquee-text { display: inline-block; animation: marquee 13.33s linear infinite; }
+
+        /* Tùy chỉnh hộp thông báo quan trọng cho CTV mới để hiển thị rõ nét, không bị loá */
+        .notice-box {
+            background-color: #fffbeb;
+            border-left: 4px solid #f59e0b;
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-top: 12px;
+            color: #1f2937;
+            font-size: 13px;
+        }
+        .notice-title {
+            font-weight: 800;
+            color: #92400e;
+            margin-bottom: 4px;
+            display: block;
+        }
+        .notice-box ul {
+            list-style-type: disc;
+            padding-left: 20px;
+        }
+        .notice-box li {
+            margin-bottom: 2px;
+            color: #374151;
+        }
     </style>
 </head>
 <body class="bg-gray-100 font-sans pb-20" onload="checkAuthAndInit()">
@@ -71,42 +96,18 @@
                     Quên mật khẩu?
                 </button>
             </div>
+
+            <!-- Lưu ý quan trọng cho CTV mới (Đã sửa lỗi loá chữ, chữ màu đen rõ ràng) -->
+            <div class="notice-box">
+                <span class="notice-title">⚠️ Lưu ý quan trọng cho CTV mới:</span>
+                <ul>
+                    <li>Vui lòng liên hệ trực tiếp Admin qua Zalo trước khi chuyển khoản.</li>
+                    <li>Hỗ trợ xử lý và duyệt đơn linh động 24/7.</li>
+                    <li>Bắt buộc <u>chụp lại màn hình bill thanh toán</u> để Admin xác thực và kích hoạt tài khoản nhanh chóng.</li>
+                </ul>
+            </div>
         </div>
     </div>
-    <!-- Lưu ý quan trọng cho CTV mới (Đã sửa lỗi loá chữ, chữ màu đen rõ ràng) -->
-        <div class="notice-box">
-            <span class="notice-title">⚠️ Lưu ý quan trọng cho CTV mới:</span>
-            <ul>
-                <li>Vui lòng liên hệ trực tiếp Admin qua Zalo trước khi chuyển khoản.</li>
-                <li>Hỗ trợ xử lý và duyệt đơn linh động 24/7.</li>
-                <li>Bắt buộc <u>chụp lại màn hình bill thanh toán</u> để Admin xác thực và kích hoạt tài khoản nhanh chóng.</li>
-            </ul>
-        </div>
-    </div>
-</div>
-
-<style>
-/* CSS Tùy chỉnh để khắc phục lỗi loá chữ và làm rõ nét */
-.login-modal-overlay {
-    position: fixed;
-    top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(0, 0, 0, 0.6);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 9999;
-}
-
-.login-modal-container {
-    background: #fff;
-    width: 90%;
-    max-width: 450px;
-    padding: 25px;
-    border-radius: 12px;
-    position: relative;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
-    font-family: sans-serif;
-}
 
     <!-- Thanh Menu Điều Hướng -->
     <nav class="bg-white shadow-sm border-b sticky top-0 z-40">
@@ -119,8 +120,8 @@
                 <span id="currentUserBadge" class="text-xs font-bold px-2 py-1 bg-blue-50 text-blue-800 rounded-lg border"></span>
                 <button onclick="switchTab('devices')" id="tabBtnDevices" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-blue-600 text-white transition shadow-sm">Danh Sách Máy</button>
                 <button onclick="switchTab('blacklist')" id="tabBtnBlacklist" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-gray-200 text-gray-700 transition hover:bg-gray-300">Danh Sách Đen</button>
-                <button id="adminOnlyMenu" onclick="switchTab('adminOrders')" id="tabBtnAdminOrders" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-amber-500 text-white transition shadow-sm hidden"><i class="fa-solid fa-clipboard-list mr-1"></i> Duyệt Đơn CTV (<span id="pendingCountBadge">0</span>)</button>
-                <button id="adminManageCtvMenu" onclick="switchTab('manageCtv')" id="tabBtnManageCtv" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-purple-600 text-white transition shadow-sm hidden"><i class="fa-solid fa-users-gear mr-1"></i> Thêm/Quản Lý CTV</button>
+                <button id="adminOnlyMenu" onclick="switchTab('adminOrders')" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-amber-500 text-white transition shadow-sm hidden"><i class="fa-solid fa-clipboard-list mr-1"></i> Duyệt Đơn CTV (<span id="pendingCountBadge">0</span>)</button>
+                <button id="adminManageCtvMenu" onclick="switchTab('manageCtv')" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-purple-600 text-white transition shadow-sm hidden"><i class="fa-solid fa-users-gear mr-1"></i> Thêm/Quản Lý CTV</button>
                 <button onclick="logoutSystem()" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-gray-800 text-white transition hover:bg-gray-900" title="Đăng xuất"><i class="fa-solid fa-right-from-bracket"></i></button>
             </div>
         </div>
@@ -434,7 +435,7 @@
                 <p><strong>Nội dung:</strong> <span id="qrMemo" class="font-mono font-bold text-indigo-700"></span></p>
             </div>
             <button onclick="confirmPaidFromModal()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-2.5 rounded-xl text-sm font-bold shadow transition mb-2">Xác Nhận Đã Thanh Toán</button>
-            <button onclick="closeQRModal()" class="w-full bg-gray-200 hover:bg-gray-300 text-gray-700 py-1.5 rounded-xl text-sm font-medium">Đóng</button>
+            <button onclick="closeQRModal()" class="w-full bg-gray-200 hover:bg-gray-300 text-gray-700 py-1.5 rounded-xl text-xs font-medium">Đóng</button>
         </div>
     </div>
 
@@ -660,7 +661,6 @@
         let currentQRIndex = null;
         let currentMapDeviceIndex = null;
         let qrTimerInterval = null;
-        let qrTimeRemaining = 659;
         let ctvRegTimerInterval = null;
         let ctvRegTimeRemaining = 900;
         let pendingRegData = null;
@@ -817,7 +817,7 @@
             if (tab === 'manageCtv') document.getElementById('sectionManageCtv').classList.remove('hidden');
         }
 
-        // --- ĐĂNG KÝ CTV BÊN NGOÀI (NHẬP SĐT, TÊN, TIẾN HÀNH THANH TOÁN QR) ---
+        // --- ĐĂNG KÝ CTV BÊN NGOÀI ---
         function openExternalCtvRegisterModal() {
             document.getElementById('externalCtvForm').reset();
             document.getElementById('externalCtvModal').classList.remove('hidden');
@@ -996,7 +996,7 @@
             }
         }
 
-        // --- QUẢN LÝ KHOẢN VAY RIÊNG CHO ADMIN & CTV ---
+        // --- QUẢN LÝ KHOẢN VAY ---
         function openModal() {
             document.getElementById('deviceModalTitle').textContent = 'Thêm Thiết Bị & Khoản Vay Mới';
             document.getElementById('editDeviceIndex').value = '-1';
@@ -1089,12 +1089,7 @@
             let currentRole = localStorage.getItem('icloud_role');
 
             devices.forEach((dev, index) => {
-                // Phân quyền: CTV chỉ thấy đơn của mình, Admin thấy hết (hoặc đơn admin)
                 if (currentRole === 'ctv' && dev.owner !== currentUser) return;
-                if (currentRole === 'admin' && dev.owner && dev.owner !== 'admin2k2' && !dev.owner.startsWith('admin')) {
-                    // Nếu là admin, tùy chính sách: "admin thêm tài khoản ctv thành công thì tài khoản ctv sẽ không được phép quản lý đơn hàng của admin, chỉ admin mới được quản lý đơn hàng vay của khách hàng còn ctv sẽ quản lý đơn hàng riêng"
-                    // Admin quản lý hết hoặc chỉ đơn admin? Đề bài: "chỉ admin mới được quản lý đơn hàng vay của khách hàng còn ctv sẽ quản lý đơn hàng riêng không chung đụng" -> Admin thấy đơn của admin và có thể thấy đơn CTV hoặc tùy. Ta cho admin thấy tất cả hoặc đơn của admin.
-                }
 
                 let searchStr = `${dev.name} ${dev.customer.name} ${dev.customer.phone} ${dev.imei} ${dev.meid1 || ''} ${dev.meid2 || ''} ${dev.serial || ''}`.toLowerCase();
                 let row = document.createElement('tr');
@@ -1245,10 +1240,9 @@
             document.getElementById('imageGalleryModal').classList.remove('flex');
         }
 
-        // --- LƯU THIẾT BỊ MỚI (CÓ MEID2 & SERIAL) ---
+        // --- LƯU THIẾT BỊ MỚI ---
         function handleSaveDevice(event) {
             event.preventDefault();
-            const editIndex = parseInt(document.getElementById('editDeviceIndex').value);
             let devices = JSON.parse(localStorage.getItem('icloud_devices')) || [];
 
             let deviceFiles = document.getElementById('deviceImages').files;
@@ -1342,7 +1336,6 @@
             });
         }
 
-        // CÁC HÀM PHỤ TRỢ KHÁC
         function searchDevice() {
             let input = document.getElementById('searchInput').value.toLowerCase().trim();
             document.querySelectorAll('.device-row').forEach(row => {
