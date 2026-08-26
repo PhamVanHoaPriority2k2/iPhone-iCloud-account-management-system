@@ -27,7 +27,7 @@
         .marquee-container { overflow: hidden; white-space: nowrap; }
         .marquee-text { display: inline-block; animation: marquee 13.33s linear infinite; }
 
-        /* Tùy chỉnh hộp thông báo quan trọng cho CTV mới để hiển thị rõ nét, không bị loá */
+        /* Hộp thông báo quan trọng cho CTV mới hiển thị rõ nét, không bị loá */
         .notice-box {
             background-color: #fffbeb;
             border-left: 4px solid #f59e0b;
@@ -97,11 +97,11 @@
                 </button>
             </div>
 
-            <!-- Lưu ý quan trọng cho CTV mới (Đã sửa lỗi loá chữ, chữ màu đen rõ ràng) -->
+            <!-- Lưu ý quan trọng cho CTV mới -->
             <div class="notice-box">
                 <span class="notice-title">⚠️ Lưu ý quan trọng cho CTV mới:</span>
                 <ul>
-                    <li>Vui lòng liên hệ trực tiếp Admin qua Zalo trước khi chuyển khoản.</li>
+                    <li>Vui lòng liên hệ trực tiếp Admin qua Zalo https://zalo.me/0869719516 trước khi chuyển khoản.</li>
                     <li>Hỗ trợ xử lý và duyệt đơn linh động 24/7.</li>
                     <li>Bắt buộc <u>chụp lại màn hình bill thanh toán</u> để Admin xác thực và kích hoạt tài khoản nhanh chóng.</li>
                 </ul>
@@ -706,46 +706,17 @@
 
         const defaultPendingOrders = [];
 
-        // --- ĐĂNG NHẬP & PHÂN QUYỀN ---
         function checkAuthAndInit() {
             let role = localStorage.getItem('icloud_role');
             let user = localStorage.getItem('icloud_user');
             if (role) {
                 document.getElementById('loginScreen').classList.add('hidden');
                 setupInterfaceByRole(role, user);
-                function initSystem() {
-    // Đảm bảo khởi tạo các kho dữ liệu dưới localStorage nếu chưa có
-    if (!localStorage.getItem('icloud_devices')) {
-        localStorage.setItem('icloud_devices', JSON.stringify(defaultDevices));
-    }
-    if (!localStorage.getItem('icloud_blacklist')) {
-        localStorage.setItem('icloud_blacklist', JSON.stringify(defaultBlacklist));
-    }
-    // SỬA: Kiểm tra nếu chưa có ctv_list mới gán default, tránh ghi đè dữ liệu đã thêm
-    if (!localStorage.getItem('icloud_ctv_list')) {
-        localStorage.setItem('icloud_ctv_list', JSON.stringify(defaultCtvList));
-    }
-    // SỬA: Kiểm tra nếu chưa có pending_orders mới gán default, tránh mất đơn hàng chờ duyệt
-    if (!localStorage.getItem('icloud_pending_orders')) {
-        localStorage.setItem('icloud_pending_orders', JSON.stringify(defaultPendingOrders));
-    }
-
-    let devices = JSON.parse(localStorage.getItem('icloud_devices'));
-    let blacklist = JSON.parse(localStorage.getItem('icloud_blacklist'));
-    let ctvList = JSON.parse(localStorage.getItem('icloud_ctv_list'));
-    let pendingOrders = JSON.parse(localStorage.getItem('icloud_pending_orders'));
-
-    renderTable(devices);
-    renderBlacklist(blacklist);
-    renderCtvList(ctvList);
-    renderPendingOrders(pendingOrders);
-    updatePendingOrdersCount(); // Cập nhật số lượng thông báo đơn chờ duyệt trên nút Menu Admin
-    checkLoanAlerts(devices);
-
-    setInterval(() => {
-        updateRealtimeCounters(devices);
-    }, 1000);
-}
+                initSystem();
+            } else {
+                document.getElementById('loginScreen').classList.remove('hidden');
+            }
+        }
 
         function handleLogin(event) {
             event.preventDefault();
@@ -828,6 +799,7 @@
             renderBlacklist(blacklist);
             renderCtvList(ctvList);
             renderPendingOrders(pendingOrders);
+            updatePendingOrdersCount();
             checkLoanAlerts(devices);
 
             setInterval(() => {
@@ -845,7 +817,6 @@
             if (tab === 'manageCtv') document.getElementById('sectionManageCtv').classList.remove('hidden');
         }
 
-        // --- ĐĂNG KÝ CTV BÊN NGOÀI ---
         function openExternalCtvRegisterModal() {
             document.getElementById('externalCtvForm').reset();
             document.getElementById('externalCtvModal').classList.remove('hidden');
@@ -922,7 +893,6 @@
             document.getElementById('pendingCountBadge').textContent = pendingOrders.length;
         }
 
-        // --- ADMIN DUYỆT ĐƠN HÀNG CTV ---
         function renderPendingOrders(orders) {
             let tbody = document.getElementById('adminOrdersTableBody');
             tbody.innerHTML = '';
@@ -975,7 +945,6 @@
             }
         }
 
-        // --- ADMIN QUẢN LÝ TÀI KHOẢN CTV ---
         function openAddCtvModal() {
             document.getElementById('addCtvModal').classList.remove('hidden');
             document.getElementById('addCtvModal').classList.add('flex');
@@ -987,22 +956,19 @@
         }
 
         function handleAdminAddCtv(event) {
-    event.preventDefault();
-    let user = document.getElementById('newCtvUser').value.trim();
-    let pass = document.getElementById('newCtvPass').value.trim();
-    let name = document.getElementById('newCtvName').value.trim();
+            event.preventDefault();
+            let user = document.getElementById('newCtvUser').value.trim();
+            let pass = document.getElementById('newCtvPass').value.trim();
+            let name = document.getElementById('newCtvName').value.trim();
 
-    let ctvList = JSON.parse(localStorage.getItem('icloud_ctv_list')) || [];
-    ctvList.push({ user, pass, name });
-    
-    // Lưu thẳng vào localStorage
-    localStorage.setItem('icloud_ctv_list', JSON.stringify(ctvList));
-    
-    renderCtvList(ctvList);
-    closeAddCtvModal();
-    alert("Thêm tài khoản CTV thành công!");
-}
-
+            let ctvList = JSON.parse(localStorage.getItem('icloud_ctv_list')) || [];
+            ctvList.push({ user, pass, name });
+            localStorage.setItem('icloud_ctv_list', JSON.stringify(ctvList));
+            
+            renderCtvList(ctvList);
+            closeAddCtvModal();
+            alert("Thêm tài khoản CTV thành công!");
+        }
 
         function renderCtvList(ctvArray) {
             let tbody = document.getElementById('ctvTableBody');
@@ -1028,7 +994,6 @@
             }
         }
 
-        // --- QUẢN LÝ KHOẢN VAY ---
         function openModal() {
             document.getElementById('deviceModalTitle').textContent = 'Thêm Thiết Bị & Khoản Vay Mới';
             document.getElementById('editDeviceIndex').value = '-1';
@@ -1210,7 +1175,6 @@
             return dateStr;
         }
 
-        // --- XEM & TẢI ẢNH ---
         function openCustomerDocs(index) {
             let devices = JSON.parse(localStorage.getItem('icloud_devices'));
             let dev = devices[index];
@@ -1272,7 +1236,6 @@
             document.getElementById('imageGalleryModal').classList.remove('flex');
         }
 
-        // --- LƯU THIẾT BỊ MỚI ---
         function handleSaveDevice(event) {
             event.preventDefault();
             let devices = JSON.parse(localStorage.getItem('icloud_devices')) || [];
