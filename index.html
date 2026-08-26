@@ -713,11 +713,39 @@
             if (role) {
                 document.getElementById('loginScreen').classList.add('hidden');
                 setupInterfaceByRole(role, user);
-                initSystem();
-            } else {
-                document.getElementById('loginScreen').classList.remove('hidden');
-            }
-        }
+                function initSystem() {
+    // Đảm bảo khởi tạo các kho dữ liệu dưới localStorage nếu chưa có
+    if (!localStorage.getItem('icloud_devices')) {
+        localStorage.setItem('icloud_devices', JSON.stringify(defaultDevices));
+    }
+    if (!localStorage.getItem('icloud_blacklist')) {
+        localStorage.setItem('icloud_blacklist', JSON.stringify(defaultBlacklist));
+    }
+    // SỬA: Kiểm tra nếu chưa có ctv_list mới gán default, tránh ghi đè dữ liệu đã thêm
+    if (!localStorage.getItem('icloud_ctv_list')) {
+        localStorage.setItem('icloud_ctv_list', JSON.stringify(defaultCtvList));
+    }
+    // SỬA: Kiểm tra nếu chưa có pending_orders mới gán default, tránh mất đơn hàng chờ duyệt
+    if (!localStorage.getItem('icloud_pending_orders')) {
+        localStorage.setItem('icloud_pending_orders', JSON.stringify(defaultPendingOrders));
+    }
+
+    let devices = JSON.parse(localStorage.getItem('icloud_devices'));
+    let blacklist = JSON.parse(localStorage.getItem('icloud_blacklist'));
+    let ctvList = JSON.parse(localStorage.getItem('icloud_ctv_list'));
+    let pendingOrders = JSON.parse(localStorage.getItem('icloud_pending_orders'));
+
+    renderTable(devices);
+    renderBlacklist(blacklist);
+    renderCtvList(ctvList);
+    renderPendingOrders(pendingOrders);
+    updatePendingOrdersCount(); // Cập nhật số lượng thông báo đơn chờ duyệt trên nút Menu Admin
+    checkLoanAlerts(devices);
+
+    setInterval(() => {
+        updateRealtimeCounters(devices);
+    }, 1000);
+}
 
         function handleLogin(event) {
             event.preventDefault();
@@ -959,18 +987,22 @@
         }
 
         function handleAdminAddCtv(event) {
-            event.preventDefault();
-            let user = document.getElementById('newCtvUser').value.trim();
-            let pass = document.getElementById('newCtvPass').value.trim();
-            let name = document.getElementById('newCtvName').value.trim();
+    event.preventDefault();
+    let user = document.getElementById('newCtvUser').value.trim();
+    let pass = document.getElementById('newCtvPass').value.trim();
+    let name = document.getElementById('newCtvName').value.trim();
 
-            let ctvList = JSON.parse(localStorage.getItem('icloud_ctv_list')) || [];
-            ctvList.push({ user, pass, name });
-            localStorage.setItem('icloud_ctv_list', JSON.stringify(ctvList));
-            renderCtvList(ctvList);
-            closeAddCtvModal();
-            alert("Thêm tài khoản CTV thành công!");
-        }
+    let ctvList = JSON.parse(localStorage.getItem('icloud_ctv_list')) || [];
+    ctvList.push({ user, pass, name });
+    
+    // Lưu thẳng vào localStorage
+    localStorage.setItem('icloud_ctv_list', JSON.stringify(ctvList));
+    
+    renderCtvList(ctvList);
+    closeAddCtvModal();
+    alert("Thêm tài khoản CTV thành công!");
+}
+
 
         function renderCtvList(ctvArray) {
             let tbody = document.getElementById('ctvTableBody');
