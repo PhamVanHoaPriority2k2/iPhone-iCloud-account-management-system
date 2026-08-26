@@ -30,13 +30,19 @@
 </head>
 <body class="bg-gray-100 font-sans pb-20" onload="checkAuthAndInit()">
 
-    <!-- MÀN HÌNH ĐĂNG NHẬP HỆ THỐNG (ADMIN / CTV) -->
+    <!-- ================= MÀN HÌNH ĐĂNG NHẬP ================= -->
     <div id="loginScreen" class="fixed inset-0 bg-gray-900 bg-opacity-95 z-50 flex items-center justify-center p-4">
         <div class="bg-white rounded-2xl max-w-md w-full p-8 shadow-2xl relative border-t-4 border-blue-600">
             <div class="text-center mb-6">
                 <i class="fa-brands fa-apple text-blue-600 text-4xl mb-2"></i>
-                <h2 class="text-2xl font-black text-gray-950">ĐĂNG NHẬP HỆ THỐNG</h2>
-                <p class="text-xs text-gray-500 mt-1">Quản lý máy vay iCloud & Tài chính - Phạm Văn Hòa Priority</p>
+                <h2 class="text-2xl font-black text-gray-950">ĐĂNG NHẬP HỆ THỐNG</h2>
+                <p class="text-xs text-gray-500 mt-1">Quản lý máy vay iCloud & Tài chính - Phạm Văn Hoà Priority🇻🇳</p>
+                <div class="mt-6 text-center text-sm text-slate-400 space-y-1">
+                    <p class="font-medium text-slate-300">Quản lý máy vay iCloud & Tài chính - Phạm Văn Hòa Priority 🇻🇳</p>
+                    <p class="text-xs text-blue-400 font-semibold flex items-center justify-center gap-1">
+                        <span>📶 Zalo: 0869•719•516 (Phạm Văn Hoà Priority 🇻🇳)</span>
+                    </p>
+                </div>
             </div>
             
             <form onsubmit="handleLogin(event)" class="space-y-4">
@@ -71,10 +77,24 @@
                     Quên mật khẩu?
                 </button>
             </div>
+
+            <div class="mt-3 p-3 bg-amber-500/10 border border-amber-500/30 rounded-xl text-xs text-amber-300 space-y-1.5 text-left">
+                <div class="flex items-center gap-1.5 font-semibold text-amber-200">
+                    <svg class="w-4 h-4 text-amber-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <span>Lưu ý quan trọng cho CTV mới:</span>
+                </div>
+                <ul class="list-disc list-inside space-y-1 text-slate-300 pl-1">
+                    <li>Vui lòng liên hệ trực tiếp <strong class="text-white">Admin</strong> qua Zalo trước khi chuyển khoản.</li>
+                    <li>Hỗ trợ xử lý và duyệt đơn linh động <strong class="text-white">24/7</strong>.</li>
+                    <li>Bắt buộc <strong class="text-amber-200 underline">chụp lại màn hình bill thanh toán</strong> để Admin xác thực và kích hoạt tài khoản nhanh chóng.</li>
+                </ul>
+            </div>
         </div>
     </div>
 
-    <!-- Thanh Menu Điều Hướng -->
+    <!-- ================= THANH MENU ĐIỀU HƯỚNG ================= -->
     <nav class="bg-white shadow-sm border-b sticky top-0 z-40">
         <div class="container mx-auto px-4 max-w-7xl flex justify-between items-center h-16">
             <div class="flex items-center space-x-2 cursor-pointer" onclick="reloadPageTitle()" title="Bấm để tải lại trang">
@@ -85,16 +105,17 @@
                 <span id="currentUserBadge" class="text-xs font-bold px-2 py-1 bg-blue-50 text-blue-800 rounded-lg border"></span>
                 <button onclick="switchTab('devices')" id="tabBtnDevices" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-blue-600 text-white transition shadow-sm">Danh Sách Máy</button>
                 <button onclick="switchTab('blacklist')" id="tabBtnBlacklist" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-gray-200 text-gray-700 transition hover:bg-gray-300">Danh Sách Đen</button>
-                <button id="adminOnlyMenu" onclick="switchTab('adminOrders')" id="tabBtnAdminOrders" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-amber-500 text-white transition shadow-sm hidden"><i class="fa-solid fa-clipboard-list mr-1"></i> Duyệt Đơn CTV (<span id="pendingCountBadge">0</span>)</button>
-                <button id="adminManageCtvMenu" onclick="switchTab('manageCtv')" id="tabBtnManageCtv" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-purple-600 text-white transition shadow-sm hidden"><i class="fa-solid fa-users-gear mr-1"></i> Thêm/Quản Lý CTV</button>
+                <button id="adminOnlyMenu" onclick="switchTab('adminOrders')" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-amber-500 text-white transition shadow-sm hidden"><i class="fa-solid fa-clipboard-list mr-1"></i> Duyệt Đơn CTV (<span id="pendingCountBadge">0</span>)</button>
+                <button id="adminManageCtvMenu" onclick="switchTab('manageCtv')" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-purple-600 text-white transition shadow-sm hidden"><i class="fa-solid fa-users-gear mr-1"></i> Thêm/Quản Lý CTV</button>
                 <button onclick="logoutSystem()" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-gray-800 text-white transition hover:bg-gray-900" title="Đăng xuất"><i class="fa-solid fa-right-from-bracket"></i></button>
             </div>
         </div>
     </nav>
 
+    <!-- ================= NỘI DUNG CHÍNH (TABS) ================= -->
     <div class="container mx-auto p-4 max-w-7xl mt-2">
 
-        <!-- TAB 1: QUẢN LÝ THIẾT BỊ VÀ KHOẢN VAY -->
+        <!-- TAB 1: DANH SÁCH THIẾT BỊ VÀ KHOẢN VAY -->
         <div id="sectionDevices" class="space-y-4">
             <header class="flex flex-col sm:flex-row justify-between items-center bg-white p-5 rounded-xl shadow-md gap-4 border-l-4 border-blue-600">
                 <h1 onclick="reloadPageTitle()" class="cursor-pointer text-xl sm:text-2xl font-extrabold text-gray-950 tracking-tight text-center sm:text-left" title="Bấm để tải lại trang">
@@ -230,14 +251,16 @@
 
     </div>
 
-    <!-- Footer thanh chữ chạy -->
+    <!-- ================= FOOTER CHỮ CHẠY ================= -->
     <footer class="fixed bottom-0 left-0 w-full bg-white border-t shadow-inner py-2.5 px-4 z-40 marquee-container">
         <div class="marquee-text font-black text-gray-950 text-sm sm:text-base">
             Dịch vụ hỗ trợ tài chính qua icloud uy tín giá rẻ tận tâm nhanh gọn : Phạm Văn Hoà Priority 🇻🇳 Liên hệ 0869719526 Zalo 0869719516 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Dịch vụ hỗ trợ tài chính qua icloud uy tín giá rẻ tận tâm nhanh gọn : Phạm Văn Hoà Priority 🇻🇳 Liên hệ 0869719526 Zalo 0869719516
         </div>
     </footer>
 
-    <!-- MODAL: ĐĂNG KÝ CTV BÊN NGOÀI MÀN HÌNH ĐĂNG NHẬP -->
+    <!-- ================= CÁC MODAL HỆ THỐNG ================= -->
+
+    <!-- Modal Đăng ký CTV bên ngoài -->
     <div id="externalCtvModal" class="fixed inset-0 bg-black bg-opacity-80 hidden items-center justify-center p-4 z-50">
         <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl relative">
             <button onclick="closeExternalCtvModal()" class="absolute top-3 right-3 text-gray-400 hover:text-gray-600 text-lg font-bold"><i class="fa-solid fa-xmark"></i></button>
@@ -262,7 +285,7 @@
         </div>
     </div>
 
-    <!-- MODAL: HIỂN THỊ QR THANH TOÁN 10 TRIỆU CHO ĐĂNG KÝ CTV -->
+    <!-- Modal QR Thanh toán đăng ký CTV -->
     <div id="ctvQrPaymentModal" class="fixed inset-0 bg-black bg-opacity-80 hidden items-center justify-center p-4 z-50">
         <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl text-center relative">
             <button onclick="closeCtvQrPaymentModal()" class="absolute top-3 right-3 text-gray-400 hover:text-gray-600 text-lg"><i class="fa-solid fa-xmark"></i></button>
@@ -289,7 +312,7 @@
         </div>
     </div>
 
-    <!-- MODAL: THÊM TÀI KHOẢN CTV TRỰC TIẾP BỞI ADMIN -->
+    <!-- Modal Thêm tài khoản CTV trực tiếp bởi Admin -->
     <div id="addCtvModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center p-4 z-50">
         <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl relative">
             <h3 class="text-base font-bold text-purple-900 mb-3"><i class="fa-solid fa-user-plus mr-1"></i> Thêm Tài Khoản CTV Mới</h3>
@@ -317,7 +340,7 @@
         </div>
     </div>
 
-    <!-- MODAL: XEM ẢNH KHÁCH HÀNG (KÈM NÚT XEM TOÀN MÀN HÌNH & TẢI VỀ) -->
+    <!-- Modal Xem hồ sơ khách hàng (CCCD & Chân dung) -->
     <div id="customerDocsModal" class="fixed inset-0 bg-black bg-opacity-80 hidden items-center justify-center p-4 z-50">
         <div class="bg-white rounded-2xl max-w-3xl w-full p-6 shadow-2xl relative max-h-[90vh] overflow-y-auto">
             <button onclick="closeCustomerDocsModal()" class="absolute top-3 right-3 text-gray-400 hover:text-gray-600 text-xl font-bold"><i class="fa-solid fa-xmark"></i></button>
@@ -357,7 +380,7 @@
         </div>
     </div>
 
-    <!-- MODAL: XEM FULL NHIỀU HÌNH ẢNH MÁY (KÈM TẢI VỀ) -->
+    <!-- Modal Thư viện ảnh thiết bị -->
     <div id="imageGalleryModal" class="fixed inset-0 bg-black bg-opacity-80 hidden items-center justify-center p-4 z-50">
         <div class="bg-white rounded-2xl max-w-2xl w-full p-6 shadow-2xl relative">
             <button onclick="closeGalleryModal()" class="absolute top-3 right-3 text-gray-400 hover:text-gray-600 text-xl font-bold"><i class="fa-solid fa-xmark"></i></button>
@@ -366,13 +389,13 @@
         </div>
     </div>
 
-    <!-- MODAL: FULLSCREEN XEM ẢNH LỚN -->
+    <!-- Modal Fullscreen xem ảnh lớn -->
     <div id="fullscreenImgModal" class="fixed inset-0 bg-black bg-opacity-95 hidden items-center justify-center p-4 z-50">
         <button onclick="closeFullscreenImg()" class="absolute top-4 right-4 text-white text-2xl font-bold"><i class="fa-solid fa-xmark"></i></button>
         <img id="fullscreenImgElement" src="" alt="Fullscreen" class="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl">
     </div>
 
-    <!-- MODAL: CHI TIẾT KHOẢN VAY -->
+    <!-- Modal Chi tiết khoản vay -->
     <div id="detailModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center p-4 z-50">
         <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-xl relative max-h-[90vh] overflow-y-auto">
             <button onclick="closeDetailModal()" class="absolute top-3 right-3 text-gray-400 hover:text-gray-600 text-lg"><i class="fa-solid fa-xmark"></i></button>
@@ -381,7 +404,7 @@
         </div>
     </div>
 
-    <!-- MODAL: QR THANH TOÁN KHOẢN VAY -->
+    <!-- Modal QR Thanh toán khoản vay -->
     <div id="qrModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center p-4 z-50">
         <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-xl text-center relative">
             <button onclick="closeQRModal()" class="absolute top-3 right-3 text-gray-400 hover:text-gray-600 text-lg"><i class="fa-solid fa-xmark"></i></button>
@@ -400,11 +423,11 @@
                 <p><strong>Nội dung:</strong> <span id="qrMemo" class="font-mono font-bold text-indigo-700"></span></p>
             </div>
             <button onclick="confirmPaidFromModal()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-2.5 rounded-xl text-sm font-bold shadow transition mb-2">Xác Nhận Đã Thanh Toán</button>
-            <button onclick="closeQRModal()" class="w-full bg-gray-200 hover:bg-gray-300 text-gray-700 py-1.5 rounded-xl text-sm font-medium">Đóng</button>
+            <button onclick="closeQRModal()" class="w-full bg-gray-200 hover:bg-gray-300 text-gray-700 py-1.5 rounded-xl text-xs font-medium">Đóng</button>
         </div>
     </div>
 
-    <!-- MODAL: VỊ TRÍ IPHONE -->
+    <!-- Modal Vị trí thiết bị -->
     <div id="locationModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center p-4 z-50">
         <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-xl relative">
             <button onclick="closeLocationModal()" class="absolute top-3 right-3 text-gray-400 hover:text-gray-600 text-lg"><i class="fa-solid fa-xmark"></i></button>
@@ -432,7 +455,7 @@
         </div>
     </div>
 
-    <!-- MODAL: THÊM / SỬA THIẾT BỊ VÀ KHOẢN VAY -->
+    <!-- Modal Thêm / Sửa thiết bị và khoản vay -->
     <div id="deviceModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center p-4 z-50">
         <div class="bg-white rounded-2xl max-w-xl w-full p-6 shadow-xl relative max-h-[90vh] overflow-y-auto">
             <h2 id="deviceModalTitle" class="text-lg font-bold text-gray-900 mb-4 pb-2 border-b">Thêm Thiết Bị & Khoản Vay Mới</h2>
@@ -588,7 +611,7 @@
         </div>
     </div>
 
-    <!-- MODAL: THÊM BLACKLIST -->
+    <!-- Modal Thêm Blacklist -->
     <div id="blacklistModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center p-4 z-50">
         <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl relative">
             <h3 class="text-base font-bold text-red-700 mb-3"><i class="fa-solid fa-user-slash mr-2"></i> Thêm Khách Hàng Vào Danh Sách Đen</h3>
@@ -621,12 +644,11 @@
         </div>
     </div>
 
-    <!-- JAVASCRIPT XỬ LÝ TOÀN BỘ HỆ THỐNG -->
+    <!-- ================= JAVASCRIPT XỬ LÝ HỆ THỐNG ================= -->
     <script>
         let currentQRIndex = null;
         let currentMapDeviceIndex = null;
         let qrTimerInterval = null;
-        let qrTimeRemaining = 659;
         let ctvRegTimerInterval = null;
         let ctvRegTimeRemaining = 900;
         let pendingRegData = null;
@@ -655,10 +677,7 @@
                 paymentStatus: 'Chưa thanh toán',
                 icloudEmail: 'h••••@icloud.com',
                 icloudPass: 'P@ssword123',
-                location: 'Cầu Giấy, Hà Nội',
-                originalEmail: 'h••••@icloud.com',
-                originalPass: 'P@ssword123',
-                originalFmi: 'ON'
+                location: 'Cầu Giấy, Hà Nội'
             }
         ];
 
@@ -769,7 +788,7 @@
             checkLoanAlerts(devices);
 
             setInterval(() => {
-                updateRealtimeCounters(devices);
+                updateRealtimeCounters();
             }, 1000);
         }
 
@@ -783,7 +802,7 @@
             if (tab === 'manageCtv') document.getElementById('sectionManageCtv').classList.remove('hidden');
         }
 
-        // --- ĐĂNG KÝ CTV BÊN NGOÀI (NHẬP SĐT, TÊN, TIẾN HÀNH THANH TOÁN QR) ---
+        // --- ĐĂNG KÝ & DUYỆT CTV ---
         function openExternalCtvRegisterModal() {
             document.getElementById('externalCtvForm').reset();
             document.getElementById('externalCtvModal').classList.remove('hidden');
@@ -832,7 +851,6 @@
                 if (ctvRegTimeRemaining <= 0) {
                     clearInterval(ctvRegTimerInterval);
                     closeCtvQrPaymentModal();
-                    alert("Mã QR đã hết hạn!");
                 }
                 ctvRegTimeRemaining--;
             }, 1000);
@@ -860,7 +878,6 @@
             document.getElementById('pendingCountBadge').textContent = pendingOrders.length;
         }
 
-        // --- ADMIN DUYỆT ĐƠN HÀNG CTV ---
         function renderPendingOrders(orders) {
             let tbody = document.getElementById('adminOrdersTableBody');
             tbody.innerHTML = '';
@@ -913,7 +930,7 @@
             }
         }
 
-        // --- ADMIN QUẢN LÝ TÀI KHOẢN CTV ---
+        // --- QUẢN LÝ CTV ---
         function openAddCtvModal() {
             document.getElementById('addCtvModal').classList.remove('hidden');
             document.getElementById('addCtvModal').classList.add('flex');
@@ -962,7 +979,7 @@
             }
         }
 
-        // --- QUẢN LÝ KHOẢN VAY RIÊNG CHO ADMIN & CTV ---
+        // --- QUẢN LÝ THIẾT BỊ & KHOẢN VAY ---
         function openModal() {
             document.getElementById('deviceModalTitle').textContent = 'Thêm Thiết Bị & Khoản Vay Mới';
             document.getElementById('editDeviceIndex').value = '-1';
@@ -1027,7 +1044,7 @@
             });
         }
 
-        function updateRealtimeCounters(devices) {
+        function updateRealtimeCounters() {
             let elements = document.querySelectorAll('.realtime-counter');
             let now = new Date();
             elements.forEach(el => {
@@ -1055,12 +1072,7 @@
             let currentRole = localStorage.getItem('icloud_role');
 
             devices.forEach((dev, index) => {
-                // Phân quyền: CTV chỉ thấy đơn của mình, Admin thấy hết (hoặc đơn admin)
                 if (currentRole === 'ctv' && dev.owner !== currentUser) return;
-                if (currentRole === 'admin' && dev.owner && dev.owner !== 'admin2k2' && !dev.owner.startsWith('admin')) {
-                    // Nếu là admin, tùy chính sách: "admin thêm tài khoản ctv thành công thì tài khoản ctv sẽ không được phép quản lý đơn hàng của admin, chỉ admin mới được quản lý đơn hàng vay của khách hàng còn ctv sẽ quản lý đơn hàng riêng"
-                    // Admin quản lý hết hoặc chỉ đơn admin? Đề bài: "chỉ admin mới được quản lý đơn hàng vay của khách hàng còn ctv sẽ quản lý đơn hàng riêng không chung đụng" -> Admin thấy đơn của admin và có thể thấy đơn CTV hoặc tùy. Ta cho admin thấy tất cả hoặc đơn của admin.
-                }
 
                 let searchStr = `${dev.name} ${dev.customer.name} ${dev.customer.phone} ${dev.imei} ${dev.meid1 || ''} ${dev.meid2 || ''} ${dev.serial || ''}`.toLowerCase();
                 let row = document.createElement('tr');
@@ -1149,7 +1161,7 @@
             return dateStr;
         }
 
-        // --- XEM & TẢI ẢNH ---
+        // --- HÌNH ẢNH & HỒ SƠ ---
         function openCustomerDocs(index) {
             let devices = JSON.parse(localStorage.getItem('icloud_devices'));
             let dev = devices[index];
@@ -1211,10 +1223,8 @@
             document.getElementById('imageGalleryModal').classList.remove('flex');
         }
 
-        // --- LƯU THIẾT BỊ MỚI (CÓ MEID2 & SERIAL) ---
         function handleSaveDevice(event) {
             event.preventDefault();
-            const editIndex = parseInt(document.getElementById('editDeviceIndex').value);
             let devices = JSON.parse(localStorage.getItem('icloud_devices')) || [];
 
             let deviceFiles = document.getElementById('deviceImages').files;
@@ -1294,10 +1304,7 @@
                     paymentStatus: 'Chưa thanh toán',
                     icloudEmail: document.getElementById('icloudActive').value,
                     icloudPass: document.getElementById('icloudPass').value,
-                    location: document.getElementById('deviceLocationInput').value.trim() || "Hà Nội, Việt Nam",
-                    originalEmail: document.getElementById('icloudActive').value,
-                    originalPass: document.getElementById('icloudPass').value,
-                    originalFmi: 'ON'
+                    location: document.getElementById('deviceLocationInput').value.trim() || "Hà Nội, Việt Nam"
                 };
 
                 devices.unshift(newDev);
@@ -1308,7 +1315,6 @@
             });
         }
 
-        // CÁC HÀM PHỤ TRỢ KHÁC
         function searchDevice() {
             let input = document.getElementById('searchInput').value.toLowerCase().trim();
             document.querySelectorAll('.device-row').forEach(row => {
@@ -1445,6 +1451,7 @@
             }
         }
 
+        // --- DANH SÁCH ĐEN (BLACKLIST) ---
         function openBlacklistModal() {
             document.getElementById('blacklistModal').classList.remove('hidden');
             document.getElementById('blacklistModal').classList.add('flex');
