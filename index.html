@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hệ Thống Quản Lý Máy Vay iCloud & Tài Chính</title>
+    <title>Hệ Thống Quản Lý Máy Vay iCloud & Cộng Tác Viên</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome icon -->
@@ -28,18 +28,66 @@
         .marquee-text { display: inline-block; animation: marquee 13.33s linear infinite; }
     </style>
 </head>
-<body class="bg-gray-100 font-sans pb-20" onload="initSystem()">
+<body class="bg-gray-100 font-sans pb-20" onload="checkAuthAndInit()">
+
+    <!-- MÀN HÌNH ĐĂNG NHẬP HỆ THỐNG (ADMIN / CTV) -->
+    <div id="loginScreen" class="fixed inset-0 bg-gray-900 bg-opacity-95 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full p-8 shadow-2xl relative border-t-4 border-blue-600">
+            <div class="text-center mb-6">
+                <i class="fa-brands fa-apple text-blue-600 text-4xl mb-2"></i>
+                <h2 class="text-2xl font-black text-gray-950">ĐĂNG NHẬP HỆ THỐNG</h2>
+                <p class="text-xs text-gray-500 mt-1">Quản lý máy vay iCloud & Tài chính - Phạm Văn Hòa Priority</p>
+            </div>
+            
+            <form onsubmit="handleLogin(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 mb-1">Tài Khoản</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
+                            <i class="fa-solid fa-user"></i>
+                        </span>
+                        <input type="text" id="loginUser" required class="w-full pl-10 pr-4 py-2.5 border rounded-xl text-sm focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Nhập tài khoản đăng nhập">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 mb-1">Mật Khẩu</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
+                            <i class="fa-solid fa-lock"></i>
+                        </span>
+                        <input type="password" id="loginPass" required class="w-full pl-10 pr-10 py-2.5 border rounded-xl text-sm focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Nhập mật khẩu">
+                        <button type="button" onclick="togglePasswordVisibility('loginPass', this)" class="absolute inset-y-0 right-0 pr-3 flex items-center text-xs text-gray-500 hover:text-blue-600 font-bold">[Hiện]</button>
+                    </div>
+                </div>
+                <div id="loginError" class="text-red-600 text-xs font-bold text-center hidden">Sai tài khoản hoặc mật khẩu!</div>
+                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-bold transition shadow-lg text-sm">Đăng Nhập Hệ Thống</button>
+            </form>
+
+            <div class="mt-4 flex items-center justify-between text-xs pt-3 border-t">
+                <button onclick="openExternalCtvRegisterModal()" class="text-blue-600 hover:underline font-bold">
+                    <i class="fa-solid fa-user-plus mr-1"></i> Đăng Ký Tài Khoản CTV
+                </button>
+                <button onclick="alert('Vui lòng liên hệ Admin để cấp lại mật khẩu mới!')" class="text-gray-500 hover:text-red-600 font-medium">
+                    Quên mật khẩu?
+                </button>
+            </div>
+        </div>
+    </div>
 
     <!-- Thanh Menu Điều Hướng -->
     <nav class="bg-white shadow-sm border-b sticky top-0 z-40">
         <div class="container mx-auto px-4 max-w-7xl flex justify-between items-center h-16">
-            <div class="flex items-center space-x-2">
+            <div class="flex items-center space-x-2 cursor-pointer" onclick="reloadPageTitle()" title="Bấm để tải lại trang">
                 <i class="fa-brands fa-apple text-blue-600 text-2xl"></i>
                 <span class="font-black text-gray-950 text-base sm:text-lg">QUẢN LÝ VAY ICLOUD <span class="text-blue-600">PRO</span></span>
             </div>
             <div class="flex items-center space-x-2">
+                <span id="currentUserBadge" class="text-xs font-bold px-2 py-1 bg-blue-50 text-blue-800 rounded-lg border"></span>
                 <button onclick="switchTab('devices')" id="tabBtnDevices" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-blue-600 text-white transition shadow-sm">Danh Sách Máy</button>
-                <button onclick="switchTab('blacklist')" id="tabBtnBlacklist" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-gray-200 text-gray-700 transition hover:bg-gray-300">Danh Sách Đen Rủi Ro</button>
+                <button onclick="switchTab('blacklist')" id="tabBtnBlacklist" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-gray-200 text-gray-700 transition hover:bg-gray-300">Danh Sách Đen</button>
+                <button id="adminOnlyMenu" onclick="switchTab('adminOrders')" id="tabBtnAdminOrders" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-amber-500 text-white transition shadow-sm hidden"><i class="fa-solid fa-clipboard-list mr-1"></i> Duyệt Đơn CTV (<span id="pendingCountBadge">0</span>)</button>
+                <button id="adminManageCtvMenu" onclick="switchTab('manageCtv')" id="tabBtnManageCtv" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-purple-600 text-white transition shadow-sm hidden"><i class="fa-solid fa-users-gear mr-1"></i> Thêm/Quản Lý CTV</button>
+                <button onclick="logoutSystem()" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-gray-800 text-white transition hover:bg-gray-900" title="Đăng xuất"><i class="fa-solid fa-right-from-bracket"></i></button>
             </div>
         </div>
     </nav>
@@ -48,9 +96,8 @@
 
         <!-- TAB 1: QUẢN LÝ THIẾT BỊ VÀ KHOẢN VAY -->
         <div id="sectionDevices" class="space-y-4">
-            <!-- Header trang & Nút Thêm -->
             <header class="flex flex-col sm:flex-row justify-between items-center bg-white p-5 rounded-xl shadow-md gap-4 border-l-4 border-blue-600">
-                <h1 class="text-xl sm:text-2xl font-extrabold text-gray-950 tracking-tight text-center sm:text-left">
+                <h1 onclick="reloadPageTitle()" class="cursor-pointer text-xl sm:text-2xl font-extrabold text-gray-950 tracking-tight text-center sm:text-left" title="Bấm để tải lại trang">
                     HỆ THỐNG QUẢN LÝ VAY ICLOUD & <span class="text-blue-600 font-black tracking-wide underline decoration-blue-300">REMOTE</span>
                 </h1>
                 <button onclick="openModal()" class="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl font-bold transition shadow-md flex items-center justify-center space-x-2">
@@ -59,28 +106,25 @@
                 </button>
             </header>
 
-            <!-- Cảnh báo khoản vay sắp đến hạn / đóng lãi -->
             <div id="alertContainer"></div>
 
-            <!-- Thanh tìm kiếm máy -->
             <div class="bg-white p-4 rounded-xl shadow-sm flex items-center">
                 <div class="relative w-full">
                     <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400">
                         <i class="fa-solid fa-search"></i>
                     </span>
-                    <input type="text" id="searchInput" onkeyup="searchDevice()" placeholder="Tìm kiếm theo Tên máy, Tên khách hàng, SĐT hoặc IMEI..." class="w-full pl-10 pr-4 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                    <input type="text" id="searchInput" onkeyup="searchDevice()" placeholder="Tìm kiếm theo Tên máy, Tên khách hàng, SĐT, IMEI, MEID1, MEID2 hoặc Serial Number..." class="w-full pl-10 pr-4 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none">
                 </div>
             </div>
 
-            <!-- Danh sách thiết bị -->
             <div class="bg-white rounded-xl shadow-sm overflow-hidden">
                 <div class="overflow-x-auto">
                     <table class="w-full text-left border-collapse min-w-[1300px]">
                         <thead>
                             <tr class="bg-gray-50 text-gray-700 text-xs uppercase tracking-wider border-b">
                                 <th class="p-3">Hình Ảnh</th>
-                                <th class="p-3">Khách Hàng & Liên Hệ</th>
-                                <th class="p-3">Thiết Bị & IMEI</th>
+                                <th class="p-3">Khách Hàng & CCCD/Chân Dung</th>
+                                <th class="p-3">Thiết Bị & Thông Số (IMEI/MEID/Serial)</th>
                                 <th class="p-3 text-center">Trạng Thái Vay</th>
                                 <th class="p-3">Khoản Vay & Lãi Suất</th>
                                 <th class="p-3 text-center">Find My iPhone</th>
@@ -89,15 +133,13 @@
                                 <th class="p-3 text-center">Thao Tác Hệ Thống</th>
                             </tr>
                         </thead>
-                        <tbody id="deviceTableBody" class="divide-y divide-gray-200 text-sm text-gray-800">
-                            <!-- Dữ liệu render tự động -->
-                        </tbody>
+                        <tbody id="deviceTableBody" class="divide-y divide-gray-200 text-sm text-gray-800"></tbody>
                     </table>
                 </div>
             </div>
         </div>
 
-        <!-- TAB 2: DANH SÁCH ĐEN RỦI RO (BLACKLIST) -->
+        <!-- TAB 2: DANH SÁCH ĐEN RỦI RO -->
         <div id="sectionBlacklist" class="space-y-4 hidden">
             <header class="flex flex-col sm:flex-row justify-between items-center bg-white p-5 rounded-xl shadow-md gap-4 border-l-4 border-red-600">
                 <h1 class="text-xl sm:text-2xl font-extrabold text-red-700 tracking-tight text-center sm:text-left">
@@ -109,7 +151,6 @@
                 </button>
             </header>
 
-            <!-- Thanh tìm kiếm kiểm tra số CCCD hoặc SĐT trong Danh Sách Đen -->
             <div class="bg-white p-4 rounded-xl shadow-sm">
                 <div class="relative w-full">
                     <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-red-400">
@@ -132,9 +173,56 @@
                                 <th class="p-3 text-center">Thao Tác</th>
                             </tr>
                         </thead>
-                        <tbody id="blacklistTableBody" class="divide-y divide-gray-200 text-sm text-gray-800">
-                            <!-- Dữ liệu blacklist -->
-                        </tbody>
+                        <tbody id="blacklistTableBody" class="divide-y divide-gray-200 text-sm text-gray-800"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 3: DUYỆT ĐƠN ĐĂNG KÝ CTV (CHỈ ADMIN) -->
+        <div id="sectionAdminOrders" class="space-y-4 hidden">
+            <header class="flex justify-between items-center bg-white p-5 rounded-xl shadow-md border-l-4 border-amber-500">
+                <h1 class="text-xl font-extrabold text-gray-950">Duyệt Đơn Đăng Ký Tài Khoản Cộng Tác Viên (CTV)</h1>
+            </header>
+            <div class="bg-white rounded-xl shadow-sm overflow-hidden p-4">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-amber-50 text-amber-900 text-xs uppercase tracking-wider border-b">
+                                <th class="p-3">Tên Khách Hàng</th>
+                                <th class="p-3">Số Điện Thoại</th>
+                                <th class="p-3">Tài Khoản Đăng Ký</th>
+                                <th class="p-3">Thời Gian Đăng Ký</th>
+                                <th class="p-3">Trạng Thái Thanh Toán</th>
+                                <th class="p-3 text-center">Thao Tác Duyệt</th>
+                            </tr>
+                        </thead>
+                        <tbody id="adminOrdersTableBody" class="divide-y divide-gray-200 text-sm text-gray-800"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 4: THÊM & QUẢN LÝ TÀI KHOẢN CTV (CHỈ ADMIN) -->
+        <div id="sectionManageCtv" class="space-y-4 hidden">
+            <header class="flex flex-col sm:flex-row justify-between items-center bg-white p-5 rounded-xl shadow-md gap-4 border-l-4 border-purple-600">
+                <h1 class="text-xl font-extrabold text-purple-900">Quản Lý & Thêm Tài Khoản Cộng Tác Viên (CTV)</h1>
+                <button onclick="openAddCtvModal()" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-xl text-xs font-bold shadow">
+                    <i class="fa-solid fa-user-plus mr-1"></i> Thêm Tài Khoản CTV Mới
+                </button>
+            </header>
+            <div class="bg-white rounded-xl shadow-sm overflow-hidden p-4">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-purple-50 text-purple-900 text-xs uppercase tracking-wider border-b">
+                                <th class="p-3">Tài Khoản CTV</th>
+                                <th class="p-3">Mật Khẩu</th>
+                                <th class="p-3">Họ Tên / SĐT</th>
+                                <th class="p-3 text-center">Thao Tác</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ctvTableBody" class="divide-y divide-gray-200 text-sm text-gray-800"></tbody>
                     </table>
                 </div>
             </div>
@@ -149,99 +237,194 @@
         </div>
     </footer>
 
-    <!-- MODAL: XEM FULL NHIỀU HÌNH ẢNH MÁY -->
+    <!-- MODAL: ĐĂNG KÝ CTV BÊN NGOÀI MÀN HÌNH ĐĂNG NHẬP -->
+    <div id="externalCtvModal" class="fixed inset-0 bg-black bg-opacity-80 hidden items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl relative">
+            <button onclick="closeExternalCtvModal()" class="absolute top-3 right-3 text-gray-400 hover:text-gray-600 text-lg font-bold"><i class="fa-solid fa-xmark"></i></button>
+            <h3 class="text-base font-black text-blue-900 mb-1 text-center"><i class="fa-solid fa-handshake mr-1"></i> Đăng Ký Tài Khoản CTV Mới</h3>
+            <p class="text-xs text-gray-500 mb-4 text-center">Phí kích hoạt tài khoản full quyền: <strong class="text-emerald-700">10,000,000 đ</strong></p>
+            
+            <form id="externalCtvForm" onsubmit="submitExternalCtvRegister(event)" class="space-y-3">
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 mb-1">Tên Khách Hàng Muốn Đăng Ký</label>
+                    <input type="text" id="regName" required class="w-full border rounded-lg px-3 py-2 text-xs outline-none" placeholder="VD: Nguyễn Văn Nam">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 mb-1">Số Điện Thoại Liên Hệ</label>
+                    <input type="text" id="regPhone" required class="w-full border rounded-lg px-3 py-2 text-xs outline-none" placeholder="VD: 0912345678">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 mb-1">Tài Khoản CTV Mong Muốn</label>
+                    <input type="text" id="regUser" required class="w-full border rounded-lg px-3 py-2 text-xs outline-none" placeholder="VD: ctvnam2026">
+                </div>
+                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2.5 rounded-xl text-xs font-bold shadow transition mt-2">Tiến Hành Thanh Toán 10,000,000 đ</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: HIỂN THỊ QR THANH TOÁN 10 TRIỆU CHO ĐĂNG KÝ CTV -->
+    <div id="ctvQrPaymentModal" class="fixed inset-0 bg-black bg-opacity-80 hidden items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl text-center relative">
+            <button onclick="closeCtvQrPaymentModal()" class="absolute top-3 right-3 text-gray-400 hover:text-gray-600 text-lg"><i class="fa-solid fa-xmark"></i></button>
+            <h3 class="text-base font-bold text-gray-900 mb-1">Quét Mã VietQR Thanh Toán</h3>
+            <p class="text-xs text-gray-500 mb-2">Techcombank - Chủ tài khoản: <strong class="text-gray-800">PHAM VAN HOA</strong></p>
+            
+            <div class="bg-amber-50 border border-amber-200 py-1.5 px-3 rounded-lg text-xs font-bold text-amber-800 mb-3 flex items-center justify-center space-x-1">
+                <i class="fa-solid fa-clock"></i>
+                <span>Hết hạn sau: <span id="ctvRegTimer" class="font-mono text-sm text-red-600">15:00</span></span>
+            </div>
+
+            <div class="bg-gray-50 border p-3 rounded-lg mb-3 flex justify-center">
+                <img id="ctvRegQrImg" src="" alt="VietQR" class="w-48 h-48 object-contain">
+            </div>
+
+            <div class="text-left text-xs bg-blue-50 p-3 rounded-lg space-y-1 text-blue-950 mb-4">
+                <p><strong>Số tài khoản:</strong> <span class="font-mono font-bold">99999999983868</span></p>
+                <p><strong>Số tiền:</strong> <span class="font-bold text-emerald-600">10,000,000 đ</span></p>
+                <p><strong>Nội dung:</strong> <span id="ctvRegMemo" class="font-mono font-bold text-indigo-700"></span></p>
+            </div>
+
+            <button onclick="confirmCtvPaidAction()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-2.5 rounded-xl text-sm font-bold shadow transition mb-2">Đã Thanh Toán</button>
+            <button onclick="closeCtvQrPaymentModal()" class="w-full bg-gray-200 hover:bg-gray-300 text-gray-700 py-1.5 rounded-xl text-xs font-medium">Đóng</button>
+        </div>
+    </div>
+
+    <!-- MODAL: THÊM TÀI KHOẢN CTV TRỰC TIẾP BỞI ADMIN -->
+    <div id="addCtvModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl relative">
+            <h3 class="text-base font-bold text-purple-900 mb-3"><i class="fa-solid fa-user-plus mr-1"></i> Thêm Tài Khoản CTV Mới</h3>
+            <form onsubmit="handleAdminAddCtv(event)" class="space-y-3">
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 mb-1">Tài Khoản CTV</label>
+                    <input type="text" id="newCtvUser" required class="w-full border rounded-lg px-3 py-2 text-xs outline-none" placeholder="Tài khoản đăng nhập">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 mb-1">Mật Khẩu CTV</label>
+                    <div class="relative">
+                        <input type="password" id="newCtvPass" required class="w-full border rounded-lg px-3 py-2 pr-10 text-xs outline-none" placeholder="Mật khẩu CTV">
+                        <button type="button" onclick="togglePasswordVisibility('newCtvPass', this)" class="absolute inset-y-0 right-0 pr-3 flex items-center text-xs text-gray-500 font-bold">[Hiện]</button>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 mb-1">Họ Tên / SĐT / Ghi Chú</label>
+                    <input type="text" id="newCtvName" required class="w-full border rounded-lg px-3 py-2 text-xs outline-none" placeholder="VD: Nguyễn Văn C - 0911223344">
+                </div>
+                <div class="flex justify-end space-x-2 pt-2">
+                    <button type="button" onclick="closeAddCtvModal()" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 rounded-lg text-xs font-bold">Hủy</button>
+                    <button type="submit" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-xs font-bold">Tạo Tài Khoản CTV</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: XEM ẢNH KHÁCH HÀNG (KÈM NÚT XEM TOÀN MÀN HÌNH & TẢI VỀ) -->
+    <div id="customerDocsModal" class="fixed inset-0 bg-black bg-opacity-80 hidden items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-2xl max-w-3xl w-full p-6 shadow-2xl relative max-h-[90vh] overflow-y-auto">
+            <button onclick="closeCustomerDocsModal()" class="absolute top-3 right-3 text-gray-400 hover:text-gray-600 text-xl font-bold"><i class="fa-solid fa-xmark"></i></button>
+            <h3 class="text-base font-bold text-gray-900 mb-4"><i class="fa-solid fa-id-card text-blue-600 mr-2"></i> Hồ Sơ Xác Thực Khách Hàng (CCCD & Chân Dung)</h3>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div class="bg-gray-50 p-3 rounded-xl border text-center flex flex-col justify-between">
+                    <div>
+                        <p class="text-xs font-bold text-gray-700 mb-2">Ảnh Chân Dung</p>
+                        <img id="docPortrait" src="" alt="Chân dung" class="w-full h-40 object-cover rounded-lg border shadow-inner mb-2">
+                    </div>
+                    <div class="flex space-x-1">
+                        <button onclick="openFullscreenImg(document.getElementById('docPortrait').src)" class="flex-1 bg-blue-600 text-white py-1 rounded text-[11px] font-bold"><i class="fa-solid fa-expand"></i> Xem</button>
+                        <a id="downloadPortraitBtn" href="#" download="ChanDung.jpg" class="flex-1 bg-emerald-600 text-white py-1 rounded text-[11px] font-bold text-center"><i class="fa-solid fa-download"></i> Tải</a>
+                    </div>
+                </div>
+                <div class="bg-gray-50 p-3 rounded-xl border text-center flex flex-col justify-between">
+                    <div>
+                        <p class="text-xs font-bold text-gray-700 mb-2">CCCD Mặt Trước</p>
+                        <img id="docFront" src="" alt="CCCD trước" class="w-full h-40 object-cover rounded-lg border shadow-inner mb-2">
+                    </div>
+                    <div class="flex space-x-1">
+                        <button onclick="openFullscreenImg(document.getElementById('docFront').src)" class="flex-1 bg-blue-600 text-white py-1 rounded text-[11px] font-bold"><i class="fa-solid fa-expand"></i> Xem</button>
+                        <a id="downloadFrontBtn" href="#" download="CCCD_Truoc.jpg" class="flex-1 bg-emerald-600 text-white py-1 rounded text-[11px] font-bold text-center"><i class="fa-solid fa-download"></i> Tải</a>
+                    </div>
+                </div>
+                <div class="bg-gray-50 p-3 rounded-xl border text-center flex flex-col justify-between">
+                    <div>
+                        <p class="text-xs font-bold text-gray-700 mb-2">CCCD Mặt Sau</p>
+                        <img id="docBack" src="" alt="CCCD sau" class="w-full h-40 object-cover rounded-lg border shadow-inner mb-2">
+                    </div>
+                    <div class="flex space-x-1">
+                        <button onclick="openFullscreenImg(document.getElementById('docBack').src)" class="flex-1 bg-blue-600 text-white py-1 rounded text-[11px] font-bold"><i class="fa-solid fa-expand"></i> Xem</button>
+                        <a id="downloadBackBtn" href="#" download="CCCD_Sau.jpg" class="flex-1 bg-emerald-600 text-white py-1 rounded text-[11px] font-bold text-center"><i class="fa-solid fa-download"></i> Tải</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: XEM FULL NHIỀU HÌNH ẢNH MÁY (KÈM TẢI VỀ) -->
     <div id="imageGalleryModal" class="fixed inset-0 bg-black bg-opacity-80 hidden items-center justify-center p-4 z-50">
         <div class="bg-white rounded-2xl max-w-2xl w-full p-6 shadow-2xl relative">
-            <button onclick="closeGalleryModal()" class="absolute top-3 right-3 text-gray-400 hover:text-gray-600 text-xl font-bold">
-                <i class="fa-solid fa-xmark"></i>
-            </button>
+            <button onclick="closeGalleryModal()" class="absolute top-3 right-3 text-gray-400 hover:text-gray-600 text-xl font-bold"><i class="fa-solid fa-xmark"></i></button>
             <h3 class="text-base font-bold text-gray-900 mb-3"><i class="fa-solid fa-images text-blue-600 mr-2"></i> Thư Viện Hình Ảnh Thiết Bị</h3>
-            <div id="galleryContainer" class="grid grid-cols-2 sm:grid-cols-3 gap-3 max-h-[70vh] overflow-y-auto p-2">
-                <!-- Render ảnh -->
-            </div>
+            <div id="galleryContainer" class="grid grid-cols-1 sm:grid-cols-2 gap-4 max-h-[70vh] overflow-y-auto p-2"></div>
         </div>
     </div>
 
-    <!-- MODAL: XEM CHI TIẾT KHOẢN VAY KHÁCH HÀNG -->
+    <!-- MODAL: FULLSCREEN XEM ẢNH LỚN -->
+    <div id="fullscreenImgModal" class="fixed inset-0 bg-black bg-opacity-95 hidden items-center justify-center p-4 z-50">
+        <button onclick="closeFullscreenImg()" class="absolute top-4 right-4 text-white text-2xl font-bold"><i class="fa-solid fa-xmark"></i></button>
+        <img id="fullscreenImgElement" src="" alt="Fullscreen" class="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl">
+    </div>
+
+    <!-- MODAL: CHI TIẾT KHOẢN VAY -->
     <div id="detailModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center p-4 z-50">
         <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-xl relative max-h-[90vh] overflow-y-auto">
-            <button onclick="closeDetailModal()" class="absolute top-3 right-3 text-gray-400 hover:text-gray-600 text-lg">
-                <i class="fa-solid fa-xmark"></i>
-            </button>
+            <button onclick="closeDetailModal()" class="absolute top-3 right-3 text-gray-400 hover:text-gray-600 text-lg"><i class="fa-solid fa-xmark"></i></button>
             <h3 class="text-lg font-bold text-gray-900 mb-4 pb-2 border-b"><i class="fa-solid fa-file-invoice-dollar text-blue-600 mr-2"></i> Chi Tiết Khoản Vay Khách Hàng</h3>
-            <div id="detailContent" class="space-y-3 text-sm text-gray-800">
-                <!-- Render chi tiết -->
-            </div>
-            <div class="mt-5 text-right">
-                <button onclick="closeDetailModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl text-sm font-bold">Đóng</button>
-            </div>
+            <div id="detailContent" class="space-y-3 text-sm text-gray-800"></div>
         </div>
     </div>
 
-    <!-- MODAL: MÃ QR THANH TOÁN VỚI ĐẾM NGƯỢC 10 PHÚT 59 GIÂY -->
+    <!-- MODAL: QR THANH TOÁN KHOẢN VAY -->
     <div id="qrModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center p-4 z-50">
         <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-xl text-center relative">
-            <button onclick="closeQRModal()" class="absolute top-3 right-3 text-gray-400 hover:text-gray-600 text-lg">
-                <i class="fa-solid fa-xmark"></i>
-            </button>
+            <button onclick="closeQRModal()" class="absolute top-3 right-3 text-gray-400 hover:text-gray-600 text-lg"><i class="fa-solid fa-xmark"></i></button>
             <h3 class="text-base font-bold text-gray-900 mb-1">Quét Mã VietQR Thanh Toán</h3>
             <p class="text-xs text-gray-500 mb-2">Techcombank - Chủ tài khoản: <strong class="text-gray-800">PHAM VAN HOA</strong></p>
             <div class="bg-red-50 border border-red-200 py-1.5 px-3 rounded-lg text-xs font-bold text-red-600 mb-3 flex items-center justify-center space-x-1">
                 <i class="fa-solid fa-clock"></i>
-                <span>Mã QR sẽ hết hạn sau: <span id="qrCountdownTimer" class="font-mono text-sm">10:59</span></span>
+                <span>Hết hạn sau: <span id="qrCountdownTimer" class="font-mono text-sm">10:59</span></span>
             </div>
             <div class="bg-gray-50 border p-3 rounded-xl mb-3 flex justify-center">
-                <img id="qrImage" src="" alt="VietQR Code" class="w-56 h-56 object-contain rounded-lg shadow-inner">
+                <img id="qrImage" src="" alt="VietQR" class="w-56 h-56 object-contain">
             </div>
             <div class="text-left text-xs bg-blue-50 p-3 rounded-lg space-y-1 text-blue-950 mb-4">
                 <p><strong>Số tài khoản:</strong> <span class="font-mono font-bold">99999999983868</span></p>
                 <p><strong>Số tiền:</strong> <span id="qrAmount" class="font-bold text-emerald-600">0 đ</span></p>
                 <p><strong>Nội dung:</strong> <span id="qrMemo" class="font-mono font-bold text-indigo-700"></span></p>
             </div>
-            <div class="space-y-2">
-                <button onclick="confirmPaidFromModal()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-2.5 rounded-xl text-sm font-bold shadow transition">Xác Nhận Đã Thanh Toán</button>
-                <button onclick="closeQRModal()" class="w-full bg-gray-200 hover:bg-gray-300 text-gray-700 py-1.5 rounded-xl text-sm font-medium">Đóng</button>
-            </div>
+            <button onclick="confirmPaidFromModal()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-2.5 rounded-xl text-sm font-bold shadow transition mb-2">Xác Nhận Đã Thanh Toán</button>
+            <button onclick="closeQRModal()" class="w-full bg-gray-200 hover:bg-gray-300 text-gray-700 py-1.5 rounded-xl text-sm font-medium">Đóng</button>
         </div>
     </div>
 
-    <!-- MODAL: XEM VỊ TRÍ (MÔ PHỎNG IPHONE & LẤY VỊ TRÍ TRỰC TIẾP) -->
+    <!-- MODAL: VỊ TRÍ IPHONE -->
     <div id="locationModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center p-4 z-50">
         <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-xl relative">
-            <button onclick="closeLocationModal()" class="absolute top-3 right-3 text-gray-400 hover:text-gray-600 text-lg">
-                <i class="fa-solid fa-xmark"></i>
-            </button>
+            <button onclick="closeLocationModal()" class="absolute top-3 right-3 text-gray-400 hover:text-gray-600 text-lg"><i class="fa-solid fa-xmark"></i></button>
             <h3 class="text-base font-bold text-gray-900 mb-1 flex items-center space-x-2">
                 <i class="fa-solid fa-map-pin text-red-500"></i>
                 <span id="locModalTitle">Vị Trí Thiết Bị</span>
             </h3>
-            <p class="text-xs text-gray-500 mb-3">Mô phỏng vị trí trực tiếp thiết bị iPhone trên bản đồ:</p>
-
             <div class="mb-3">
                 <button type="button" onclick="getCurrentLiveLocation()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded-lg text-xs font-bold shadow-sm flex items-center justify-center space-x-1.5">
                     <i class="fa-solid fa-crosshairs"></i>
                     <span>Lấy Vị Trí Trực Tiếp Hiện Tại Của Máy</span>
                 </button>
             </div>
-
-            <div class="mb-3 flex space-x-2">
-                <input type="text" id="mapSearchInput" placeholder="Nhập địa điểm hoặc tìm kiếm..." class="w-full border rounded-lg px-3 py-1.5 text-xs focus:ring-2 focus:ring-blue-500 outline-none">
-                <button type="button" onclick="searchMapLocation()" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap shadow-sm">Tìm</button>
-            </div>
-
             <div class="w-full h-64 rounded-xl overflow-hidden border shadow-inner mb-3 relative">
                 <iframe id="mapFrame" class="w-full h-full border-0" src="" allowfullscreen="" loading="lazy"></iframe>
-                <div class="absolute bottom-3 left-3 bg-white/90 backdrop-blur px-3 py-1.5 rounded-lg shadow border flex items-center space-x-2 text-xs font-bold text-gray-900">
-                    <i class="fa-solid fa-mobile-screen-button text-blue-600 animate-bounce"></i>
-                    <span>iPhone đang ở đây</span>
-                </div>
             </div>
-
             <div class="mb-4">
-                <label class="block text-xs font-medium text-gray-700 mb-1">Địa chỉ chính xác:</label>
-                <input type="text" id="manualLocationInput" class="w-full border rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-blue-500 outline-none" placeholder="VD: Cầu Giấy, Hà Nội">
+                <label class="block text-xs font-medium text-gray-700 mb-1">Địa chỉ:</label>
+                <input type="text" id="manualLocationInput" class="w-full border rounded-lg px-3 py-2 text-xs outline-none">
             </div>
-
             <div class="flex space-x-2">
                 <button onclick="saveNewLocation()" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white py-2 rounded-lg text-sm font-bold shadow-sm">Lưu Vị Trí Mới</button>
                 <button onclick="closeLocationModal()" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium">Đóng</button>
@@ -249,79 +432,98 @@
         </div>
     </div>
 
-    <!-- MODAL: THÊM THIẾT BỊ VÀ KHOẢN VAY MỚI -->
+    <!-- MODAL: THÊM / SỬA THIẾT BỊ VÀ KHOẢN VAY -->
     <div id="deviceModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center p-4 z-50">
         <div class="bg-white rounded-2xl max-w-xl w-full p-6 shadow-xl relative max-h-[90vh] overflow-y-auto">
             <h2 id="deviceModalTitle" class="text-lg font-bold text-gray-900 mb-4 pb-2 border-b">Thêm Thiết Bị & Khoản Vay Mới</h2>
             
             <form id="addDeviceForm" onsubmit="handleSaveDevice(event)" class="space-y-3">
                 <input type="hidden" id="editDeviceIndex" value="-1">
-                <!-- Thông tin khách hàng & cảnh báo blacklist -->
                 <div class="bg-blue-50 p-3 rounded-xl border border-blue-200 space-y-2">
-                    <h3 class="text-xs font-bold text-blue-900 uppercase">Thông Tin Khách Hàng (Tích Hợp Check Blacklist)</h3>
+                    <h3 class="text-xs font-bold text-blue-900 uppercase">Thông Tin Khách Hàng & Ảnh Xác Thực (CCCD & Chân Dung)</h3>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
                         <div>
                             <label class="block text-xs font-medium text-gray-700 mb-1">Họ Tên Khách Hàng</label>
-                            <input type="text" id="custName" required class="w-full border rounded-lg px-3 py-1.5 text-xs focus:ring-2 focus:ring-blue-500 outline-none bg-white" placeholder="VD: Nguyễn Văn A">
+                            <input type="text" id="custName" required class="w-full border rounded-lg px-3 py-1.5 text-xs outline-none bg-white" placeholder="Nguyễn Văn A">
                         </div>
                         <div>
                             <label class="block text-xs font-medium text-gray-700 mb-1">Số Điện Thoại</label>
-                            <input type="text" id="custPhone" oninput="checkBlacklistInput()" required class="w-full border rounded-lg px-3 py-1.5 text-xs focus:ring-2 focus:ring-blue-500 outline-none bg-white" placeholder="0912345678">
+                            <input type="text" id="custPhone" oninput="checkBlacklistInput()" required class="w-full border rounded-lg px-3 py-1.5 text-xs outline-none bg-white" placeholder="0912345678">
                         </div>
                     </div>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
                         <div>
                             <label class="block text-xs font-medium text-gray-700 mb-1">Số CCCD / CMND</label>
-                            <input type="text" id="custCccd" oninput="checkBlacklistInput()" required class="w-full border rounded-lg px-3 py-1.5 text-xs focus:ring-2 focus:ring-blue-500 outline-none bg-white" placeholder="001202001234">
+                            <input type="text" id="custCccd" oninput="checkBlacklistInput()" required class="w-full border rounded-lg px-3 py-1.5 text-xs outline-none bg-white" placeholder="001202001234">
                         </div>
                         <div>
                             <label class="block text-xs font-medium text-gray-700 mb-1">Địa Chỉ Khách Hàng</label>
-                            <input type="text" id="custAddress" required class="w-full border rounded-lg px-3 py-1.5 text-xs focus:ring-2 focus:ring-blue-500 outline-none bg-white" placeholder="Địa chỉ thường trú">
+                            <input type="text" id="custAddress" required class="w-full border rounded-lg px-3 py-1.5 text-xs outline-none bg-white" placeholder="Địa chỉ thường trú">
                         </div>
                     </div>
-                    <!-- Cảnh báo nguy cơ mất vốn -->
-                    <div id="blacklistWarningBox" class="hidden bg-red-600 text-white p-2 rounded-lg text-xs font-extrabold flex items-center space-x-2 animate-pulse">
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1 border-t border-blue-200">
+                        <div>
+                            <label class="block text-[11px] font-medium text-gray-700 mb-1">Ảnh Chân Dung</label>
+                            <input type="file" id="portraitImage" accept="image/*" class="w-full border rounded px-1 py-1 text-[10px] bg-white">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-medium text-gray-700 mb-1">CCCD Mặt Trước</label>
+                            <input type="file" id="cccdFrontImage" accept="image/*" class="w-full border rounded px-1 py-1 text-[10px] bg-white">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-medium text-gray-700 mb-1">CCCD Mặt Sau</label>
+                            <input type="file" id="cccdBackImage" accept="image/*" class="w-full border rounded px-1 py-1 text-[10px] bg-white">
+                        </div>
+                    </div>
+                    <div id="blacklistWarningBox" class="hidden bg-red-600 text-white p-2 rounded-lg text-xs font-extrabold flex items-center space-x-2">
                         <i class="fa-solid fa-triangle-exclamation text-base"></i>
-                        <span id="blacklistWarningText">CẢNH BÁO: Khách hàng này nằm trong danh sách đen! Nguy cơ rủi ro mất vốn cao!</span>
+                        <span id="blacklistWarningText">CẢNH BÁO: Khách hàng nằm trong danh sách đen!</span>
                     </div>
                 </div>
 
-                <!-- Thông tin thiết bị & nhiều ảnh -->
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     <div>
                         <label class="block text-xs font-medium text-gray-700 mb-1">Tên Thiết Bị</label>
-                        <input type="text" id="deviceName" required class="w-full border rounded-lg px-3 py-1.5 text-xs focus:ring-2 focus:ring-blue-500 outline-none" placeholder="VD: iPhone 13 Pro Max">
+                        <input type="text" id="deviceName" required class="w-full border rounded-lg px-3 py-1.5 text-xs outline-none" placeholder="iPhone 13 Pro Max">
                     </div>
                     <div>
-                        <label class="block text-xs font-medium text-gray-700 mb-1">Tải Lên Nhiều Hình Ảnh Máy</label>
+                        <label class="block text-xs font-medium text-gray-700 mb-1">Hình Ảnh Máy</label>
                         <input type="file" id="deviceImages" accept="image/*" multiple class="w-full border rounded-lg px-1 py-1 text-xs bg-gray-50">
-                        <span id="imageHelpText" class="text-[10px] text-gray-500 block mt-0.5">Để trống khi chỉnh sửa nếu không muốn thay ảnh mới.</span>
+                        <span id="imageHelpText" class="text-[10px] text-gray-500 block mt-0.5">Chọn ảnh thiết bị.</span>
                     </div>
                 </div>
 
                 <div class="grid grid-cols-2 gap-2">
                     <div>
                         <label class="block text-xs font-medium text-gray-700 mb-1">Màu Sắc</label>
-                        <input type="text" id="deviceColor" required class="w-full border rounded-lg px-3 py-1.5 text-xs outline-none" placeholder="VD: Gold">
+                        <input type="text" id="deviceColor" required class="w-full border rounded-lg px-3 py-1.5 text-xs outline-none" placeholder="Gold">
                     </div>
                     <div>
                         <label class="block text-xs font-medium text-gray-700 mb-1">Dung Lượng</label>
-                        <input type="text" id="deviceStorage" required class="w-full border rounded-lg px-3 py-1.5 text-xs outline-none" placeholder="VD: 256GB">
+                        <input type="text" id="deviceStorage" required class="w-full border rounded-lg px-3 py-1.5 text-xs outline-none" placeholder="256GB">
                     </div>
                 </div>
                 
-                <div class="grid grid-cols-2 gap-2">
+                <div class="grid grid-cols-3 gap-2">
                     <div>
                         <label class="block text-xs font-medium text-gray-700 mb-1">IMEI</label>
-                        <input type="text" id="imei" required class="w-full border rounded-lg px-3 py-1.5 text-xs outline-none" placeholder="IMEI chính">
+                        <input type="text" id="imei" required class="w-full border rounded-lg px-3 py-1.5 text-xs outline-none" placeholder="IMEI">
                     </div>
                     <div>
-                        <label class="block text-xs font-medium text-gray-700 mb-1">Serial Number</label>
-                        <input type="text" id="serialNumber" required class="w-full border rounded-lg px-3 py-1.5 text-xs outline-none" placeholder="Serial No">
+                        <label class="block text-xs font-medium text-gray-700 mb-1">MEID1</label>
+                        <input type="text" id="meid1" required class="w-full border rounded-lg px-3 py-1.5 text-xs outline-none" placeholder="MEID1">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-700 mb-1">MEID2</label>
+                        <input type="text" id="meid2" class="w-full border rounded-lg px-3 py-1.5 text-xs outline-none" placeholder="MEID2 (nếu có)">
                     </div>
                 </div>
 
-                <!-- Công cụ tính lãi suất & thời gian vay -->
+                <div>
+                    <label class="block text-xs font-medium text-gray-700 mb-1">Serial Number</label>
+                    <input type="text" id="serialNumber" required class="w-full border rounded-lg px-3 py-1.5 text-xs outline-none" placeholder="Serial Number">
+                </div>
+
                 <div class="bg-gray-50 p-3 rounded-xl border space-y-2">
                     <h3 class="text-xs font-bold text-gray-800 uppercase">Công Cụ Tính Lãi Suất & Thời Gian Vay</h3>
                     <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
@@ -330,7 +532,7 @@
                             <input type="number" id="principalAmount" oninput="calculateLoan()" required class="w-full border rounded px-2 py-1 text-xs outline-none bg-white" placeholder="15000000">
                         </div>
                         <div>
-                            <label class="block text-[11px] text-gray-600 mb-1">Lãi Suất (%/Tháng)</label>
+                            <label class="block text-[11px] text-gray-600 mb-1">Lãi (%/Tháng)</label>
                             <input type="number" step="0.1" id="interestRate" oninput="calculateLoan()" value="3" required class="w-full border rounded px-2 py-1 text-xs outline-none bg-white">
                         </div>
                         <div>
@@ -366,13 +568,16 @@
                     </div>
                     <div>
                         <label class="block text-xs font-medium text-gray-700 mb-1">Mật Khẩu iCloud</label>
-                        <input type="text" id="icloudPass" required class="w-full border rounded-lg px-3 py-1.5 text-xs outline-none" placeholder="Mật khẩu">
+                        <div class="relative">
+                            <input type="password" id="icloudPass" required class="w-full border rounded-lg px-3 py-1.5 pr-12 text-xs outline-none" placeholder="Mật khẩu">
+                            <button type="button" onclick="togglePasswordVisibility('icloudPass', this)" class="absolute inset-y-0 right-0 pr-2 flex items-center text-[10px] text-gray-500 font-bold">[Hiện]</button>
+                        </div>
                     </div>
                 </div>
 
                 <div>
                     <label class="block text-xs font-medium text-gray-700 mb-1">Vị Trí Ban Đầu</label>
-                    <input type="text" id="deviceLocationInput" class="w-full border rounded-lg px-3 py-1.5 text-xs outline-none" placeholder="VD: Quận Hoàn Kiếm, Hà Nội">
+                    <input type="text" id="deviceLocationInput" class="w-full border rounded-lg px-3 py-1.5 text-xs outline-none" placeholder="Hà Nội, Việt Nam">
                 </div>
 
                 <div class="flex justify-end space-x-2 pt-2">
@@ -383,34 +588,34 @@
         </div>
     </div>
 
-    <!-- MODAL: THÊM VÀO DANH SÁCH ĐEN -->
+    <!-- MODAL: THÊM BLACKLIST -->
     <div id="blacklistModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center p-4 z-50">
         <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl relative">
             <h3 class="text-base font-bold text-red-700 mb-3"><i class="fa-solid fa-user-slash mr-2"></i> Thêm Khách Hàng Vào Danh Sách Đen</h3>
             <form onsubmit="handleAddBlacklist(event)" class="space-y-3">
                 <div>
-                    <label class="block text-xs font-medium text-gray-700 mb-1">Họ Tên Khách Hàng</label>
-                    <input type="text" id="blName" required class="w-full border rounded-lg px-3 py-2 text-xs outline-none" placeholder="Họ và tên">
+                    <label class="block text-xs font-medium text-gray-700 mb-1">Họ Tên</label>
+                    <input type="text" id="blName" required class="w-full border rounded-lg px-3 py-2 text-xs outline-none">
                 </div>
                 <div>
                     <label class="block text-xs font-medium text-gray-700 mb-1">Số Điện Thoại</label>
-                    <input type="text" id="blPhone" required class="w-full border rounded-lg px-3 py-2 text-xs outline-none" placeholder="Số điện thoại">
+                    <input type="text" id="blPhone" required class="w-full border rounded-lg px-3 py-2 text-xs outline-none">
                 </div>
                 <div>
-                    <label class="block text-xs font-medium text-gray-700 mb-1">Số CCCD / CMND</label>
-                    <input type="text" id="blCccd" required class="w-full border rounded-lg px-3 py-2 text-xs outline-none" placeholder="Số CCCD">
+                    <label class="block text-xs font-medium text-gray-700 mb-1">Số CCCD</label>
+                    <input type="text" id="blCccd" required class="w-full border rounded-lg px-3 py-2 text-xs outline-none">
                 </div>
                 <div>
-                    <label class="block text-xs font-medium text-gray-700 mb-1">Địa Chỉ Người Vay</label>
-                    <input type="text" id="blAddress" required class="w-full border rounded-lg px-3 py-2 text-xs outline-none" placeholder="Địa chỉ cư trú">
+                    <label class="block text-xs font-medium text-gray-700 mb-1">Địa Chỉ</label>
+                    <input type="text" id="blAddress" required class="w-full border rounded-lg px-3 py-2 text-xs outline-none">
                 </div>
                 <div>
-                    <label class="block text-xs font-medium text-gray-700 mb-1">Lý Do Đưa Vào Danh Sách Đen</label>
-                    <textarea id="blReason" rows="2" required class="w-full border rounded-lg px-3 py-2 text-xs outline-none" placeholder="VD: Bùng tiền, trốn nợ, cầm cố máy iCloud giả..."></textarea>
+                    <label class="block text-xs font-medium text-gray-700 mb-1">Lý Do</label>
+                    <textarea id="blReason" rows="2" required class="w-full border rounded-lg px-3 py-2 text-xs outline-none"></textarea>
                 </div>
                 <div class="flex justify-end space-x-2 pt-2">
-                    <button type="button" onclick="closeBlacklistModal()" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 rounded-lg text-xs font-bold">Hủy</button>
-                    <button type="submit" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-xs font-bold">Lưu Vào Danh Sách Đen</button>
+                    <button type="button" onclick="closeBlacklistModal()" class="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-xs font-bold">Hủy</button>
+                    <button type="submit" class="bg-red-600 text-white px-4 py-2 rounded-lg text-xs font-bold">Lưu</button>
                 </div>
             </form>
         </div>
@@ -421,23 +626,27 @@
         let currentQRIndex = null;
         let currentMapDeviceIndex = null;
         let qrTimerInterval = null;
-        let qrTimeRemaining = 659; // 10 phút 59 giây = 659 giây
+        let qrTimeRemaining = 659;
+        let ctvRegTimerInterval = null;
+        let ctvRegTimeRemaining = 900;
+        let pendingRegData = null;
 
         const defaultDevices = [
             {
                 id: '1',
-                images: ['https://via.placeholder.com/150?text=iPhone+1', 'https://via.placeholder.com/150?text=iPhone+2'],
+                owner: 'admin2k2',
+                images: ['https://via.placeholder.com/150?text=iPhone+1'],
+                portrait: 'https://via.placeholder.com/150?text=Portrait',
+                cccdFront: 'https://via.placeholder.com/150?text=CCCD+Front',
+                cccdBack: 'https://via.placeholder.com/150?text=CCCD+Back',
                 name: 'iPhone 13 Pro Max',
                 color: 'Gold',
                 storage: '256GB',
                 imei: '351234567890123',
+                meid1: '86012345678901',
+                meid2: '86012345678902',
                 serial: 'F2LX9ABC0G',
-                customer: {
-                    name: 'Nguyễn Văn Hoàng',
-                    phone: '0988123456',
-                    cccd: '001202009999',
-                    address: 'Cầu Giấy, Hà Nội'
-                },
+                customer: { name: 'Nguyễn Văn Hoàng', phone: '0988123456', cccd: '001202009999', address: 'Cầu Giấy, Hà Nội' },
                 loanDate: '2026-06-01',
                 interestDueDate: '2026-07-01',
                 dueDate: '2026-12-01',
@@ -454,52 +663,312 @@
         ];
 
         const defaultBlacklist = [
-            { name: 'Trần Văn Bùng', phone: '0900000001', cccd: '001200000111', address: 'Đống Đa, Hà Nội', reason: 'Trốn nợ, quỵt tiền khoản vay iCloud nhiều lần.' }
+            { name: 'Trần Văn Bùng', phone: '0900000001', cccd: '001200000111', address: 'Đống Đa, Hà Nội', reason: 'Trốn nợ, quỵt tiền khoản vay iCloud.' }
         ];
 
+        const defaultCtvList = [
+            { user: 'ctvtest', pass: 'ctv123456', name: 'CTV Test - 0912345678' }
+        ];
+
+        const defaultPendingOrders = [];
+
+        // --- ĐĂNG NHẬP & PHÂN QUYỀN ---
+        function checkAuthAndInit() {
+            let role = localStorage.getItem('icloud_role');
+            let user = localStorage.getItem('icloud_user');
+            if (role) {
+                document.getElementById('loginScreen').classList.add('hidden');
+                setupInterfaceByRole(role, user);
+                initSystem();
+            } else {
+                document.getElementById('loginScreen').classList.remove('hidden');
+            }
+        }
+
+        function handleLogin(event) {
+            event.preventDefault();
+            let u = document.getElementById('loginUser').value.trim();
+            let p = document.getElementById('loginPass').value.trim();
+
+            if (u === 'admin2k2' && p === 'admin2k2@@') {
+                localStorage.setItem('icloud_role', 'admin');
+                localStorage.setItem('icloud_user', 'admin2k2');
+                document.getElementById('loginScreen').classList.add('hidden');
+                setupInterfaceByRole('admin', 'admin2k2');
+                initSystem();
+            } else {
+                let ctvList = JSON.parse(localStorage.getItem('icloud_ctv_list')) || defaultCtvList;
+                let foundCtv = ctvList.find(c => c.user === u && c.pass === p);
+                if (foundCtv) {
+                    localStorage.setItem('icloud_role', 'ctv');
+                    localStorage.setItem('icloud_user', u);
+                    document.getElementById('loginScreen').classList.add('hidden');
+                    setupInterfaceByRole('ctv', u);
+                    initSystem();
+                } else {
+                    document.getElementById('loginError').classList.remove('hidden');
+                }
+            }
+        }
+
+        function logoutSystem() {
+            localStorage.removeItem('icloud_role');
+            localStorage.removeItem('icloud_user');
+            location.reload();
+        }
+
+        function setupInterfaceByRole(role, user) {
+            let badge = document.getElementById('currentUserBadge');
+            let adminOrdersMenu = document.getElementById('adminOnlyMenu');
+            let adminManageCtvMenu = document.getElementById('adminManageCtvMenu');
+
+            if (role === 'admin') {
+                badge.textContent = `Quyền: Quản Trị Viên (Admin)`;
+                badge.className = 'text-xs font-bold px-2 py-1 bg-red-50 text-red-800 rounded-lg border border-red-200';
+                adminOrdersMenu.classList.remove('hidden');
+                adminManageCtvMenu.classList.remove('hidden');
+                updatePendingOrdersCount();
+            } else {
+                badge.textContent = `Quyền: Cộng Tác Viên (${user})`;
+                badge.className = 'text-xs font-bold px-2 py-1 bg-purple-50 text-purple-800 rounded-lg border border-purple-200';
+                adminOrdersMenu.classList.add('hidden');
+                adminManageCtvMenu.classList.add('hidden');
+            }
+        }
+
+        function togglePasswordVisibility(inputId, btn) {
+            let input = document.getElementById(inputId);
+            if (input.type === 'password') {
+                input.type = 'text';
+                btn.textContent = '[Ẩn]';
+            } else {
+                input.type = 'password';
+                btn.textContent = '[Hiện]';
+            }
+        }
+
+        function reloadPageTitle() {
+            location.reload();
+        }
+
         function initSystem() {
+            if (!localStorage.getItem('icloud_devices')) localStorage.setItem('icloud_devices', JSON.stringify(defaultDevices));
+            if (!localStorage.getItem('icloud_blacklist')) localStorage.setItem('icloud_blacklist', JSON.stringify(defaultBlacklist));
+            if (!localStorage.getItem('icloud_ctv_list')) localStorage.setItem('icloud_ctv_list', JSON.stringify(defaultCtvList));
+            if (!localStorage.getItem('icloud_pending_orders')) localStorage.setItem('icloud_pending_orders', JSON.stringify(defaultPendingOrders));
+
             let devices = JSON.parse(localStorage.getItem('icloud_devices'));
-            if (!devices) {
-                devices = defaultDevices;
-                localStorage.setItem('icloud_devices', JSON.stringify(devices));
-            }
             let blacklist = JSON.parse(localStorage.getItem('icloud_blacklist'));
-            if (!blacklist) {
-                blacklist = defaultBlacklist;
-                localStorage.setItem('icloud_blacklist', JSON.stringify(blacklist));
-            }
+            let ctvList = JSON.parse(localStorage.getItem('icloud_ctv_list'));
+            let pendingOrders = JSON.parse(localStorage.getItem('icloud_pending_orders'));
+
             renderTable(devices);
             renderBlacklist(blacklist);
+            renderCtvList(ctvList);
+            renderPendingOrders(pendingOrders);
             checkLoanAlerts(devices);
+
             setInterval(() => {
                 updateRealtimeCounters(devices);
             }, 1000);
         }
 
         function switchTab(tab) {
-            if (tab === 'devices') {
-                document.getElementById('sectionDevices').classList.remove('hidden');
-                document.getElementById('sectionBlacklist').classList.add('hidden');
-                document.getElementById('tabBtnDevices').className = 'px-3 py-1.5 rounded-lg text-xs font-bold bg-blue-600 text-white transition shadow-sm';
-                document.getElementById('tabBtnBlacklist').className = 'px-3 py-1.5 rounded-lg text-xs font-bold bg-gray-200 text-gray-700 transition hover:bg-gray-300';
-            } else {
-                document.getElementById('sectionDevices').classList.add('hidden');
-                document.getElementById('sectionBlacklist').classList.remove('hidden');
-                document.getElementById('tabBtnBlacklist').className = 'px-3 py-1.5 rounded-lg text-xs font-bold bg-red-600 text-white transition shadow-sm';
-                document.getElementById('tabBtnDevices').className = 'px-3 py-1.5 rounded-lg text-xs font-bold bg-gray-200 text-gray-700 transition hover:bg-gray-300';
+            let sections = ['sectionDevices', 'sectionBlacklist', 'sectionAdminOrders', 'sectionManageCtv'];
+            sections.forEach(s => document.getElementById(s).classList.add('hidden'));
+
+            if (tab === 'devices') document.getElementById('sectionDevices').classList.remove('hidden');
+            if (tab === 'blacklist') document.getElementById('sectionBlacklist').classList.remove('hidden');
+            if (tab === 'adminOrders') document.getElementById('sectionAdminOrders').classList.remove('hidden');
+            if (tab === 'manageCtv') document.getElementById('sectionManageCtv').classList.remove('hidden');
+        }
+
+        // --- ĐĂNG KÝ CTV BÊN NGOÀI (NHẬP SĐT, TÊN, TIẾN HÀNH THANH TOÁN QR) ---
+        function openExternalCtvRegisterModal() {
+            document.getElementById('externalCtvForm').reset();
+            document.getElementById('externalCtvModal').classList.remove('hidden');
+            document.getElementById('externalCtvModal').classList.add('flex');
+        }
+
+        function closeExternalCtvModal() {
+            document.getElementById('externalCtvModal').classList.add('hidden');
+            document.getElementById('externalCtvModal').classList.remove('flex');
+        }
+
+        function submitExternalCtvRegister(event) {
+            event.preventDefault();
+            let name = document.getElementById('regName').value.trim();
+            let phone = document.getElementById('regPhone').value.trim();
+            let user = document.getElementById('regUser').value.trim();
+
+            pendingRegData = { name, phone, user, date: new Date().toLocaleString() };
+
+            closeExternalCtvModal();
+            openCtvQrPaymentModalForReg();
+        }
+
+        function openCtvQrPaymentModalForReg() {
+            let memo = `DKCTV${Math.floor(100 + Math.random() * 900)}`;
+            pendingRegData.memo = memo;
+            let qrUrl = `https://img.vietqr.io/image/TCB-99999999983868-compact2.png?amount=10000000&addInfo=${encodeURIComponent(memo)}&accountName=PHAM%20VAN%20HOA`;
+
+            document.getElementById('ctvRegQrImg').src = qrUrl;
+            document.getElementById('ctvRegMemo').textContent = memo;
+
+            document.getElementById('ctvQrPaymentModal').classList.remove('hidden');
+            document.getElementById('ctvQrPaymentModal').classList.add('flex');
+
+            ctvRegTimeRemaining = 900;
+            startCtvRegCountdown();
+        }
+
+        function startCtvRegCountdown() {
+            clearInterval(ctvRegTimerInterval);
+            let timerEl = document.getElementById('ctvRegTimer');
+            ctvRegTimerInterval = setInterval(() => {
+                let mins = Math.floor(ctvRegTimeRemaining / 60);
+                let secs = ctvRegTimeRemaining % 60;
+                timerEl.textContent = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+                if (ctvRegTimeRemaining <= 0) {
+                    clearInterval(ctvRegTimerInterval);
+                    closeCtvQrPaymentModal();
+                    alert("Mã QR đã hết hạn!");
+                }
+                ctvRegTimeRemaining--;
+            }, 1000);
+        }
+
+        function closeCtvQrPaymentModal() {
+            clearInterval(ctvRegTimerInterval);
+            document.getElementById('ctvQrPaymentModal').classList.add('hidden');
+            document.getElementById('ctvQrPaymentModal').classList.remove('flex');
+        }
+
+        function confirmCtvPaidAction() {
+            let pendingOrders = JSON.parse(localStorage.getItem('icloud_pending_orders')) || [];
+            pendingOrders.push(pendingRegData);
+            localStorage.setItem('icloud_pending_orders', JSON.stringify(pendingOrders));
+            renderPendingOrders(pendingOrders);
+            updatePendingOrdersCount();
+
+            closeCtvQrPaymentModal();
+            alert("Đã gửi yêu cầu thanh toán thành công! Vui lòng chờ Admin duyệt thủ công đơn hàng của bạn.");
+        }
+
+        function updatePendingOrdersCount() {
+            let pendingOrders = JSON.parse(localStorage.getItem('icloud_pending_orders')) || [];
+            document.getElementById('pendingCountBadge').textContent = pendingOrders.length;
+        }
+
+        // --- ADMIN DUYỆT ĐƠN HÀNG CTV ---
+        function renderPendingOrders(orders) {
+            let tbody = document.getElementById('adminOrdersTableBody');
+            tbody.innerHTML = '';
+            if (orders.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-gray-500">Không có đơn đăng ký CTV nào đang chờ duyệt.</td></tr>`;
+                return;
+            }
+            orders.forEach((o, index) => {
+                let tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="p-3 font-bold">${o.name}</td>
+                    <td class="p-3 font-mono">${o.phone}</td>
+                    <td class="p-3 font-mono text-blue-700 font-bold">${o.user}</td>
+                    <td class="p-3 text-xs text-gray-500">${o.date}</td>
+                    <td class="p-3"><span class="px-2 py-0.5 bg-amber-100 text-amber-800 rounded text-xs font-bold">Chờ duyệt thủ công</span></td>
+                    <td class="p-3 text-center space-x-1">
+                        <button onclick="approveCtvOrder(${index})" class="bg-emerald-600 hover:bg-emerald-700 text-white px-2.5 py-1 rounded text-xs font-bold">Duyệt & Tạo TK</button>
+                        <button onclick="rejectCtvOrder(${index})" class="bg-red-600 hover:bg-red-700 text-white px-2.5 py-1 rounded text-xs font-bold">Từ chối</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function approveCtvOrder(index) {
+            let orders = JSON.parse(localStorage.getItem('icloud_pending_orders'));
+            let order = orders[index];
+
+            let ctvList = JSON.parse(localStorage.getItem('icloud_ctv_list')) || [];
+            let randomPass = 'ctv' + Math.floor(1000 + Math.random() * 9000);
+            ctvList.push({ user: order.user, pass: randomPass, name: `${order.name} - ${order.phone}` });
+            localStorage.setItem('icloud_ctv_list', JSON.stringify(ctvList));
+            renderCtvList(ctvList);
+
+            orders.splice(index, 1);
+            localStorage.setItem('icloud_pending_orders', JSON.stringify(orders));
+            renderPendingOrders(orders);
+            updatePendingOrdersCount();
+
+            alert(`Đã duyệt thành công! Tài khoản: ${order.user} | Mật khẩu khởi tạo: ${randomPass}`);
+        }
+
+        function rejectCtvOrder(index) {
+            if (confirm("Từ chối đơn đăng ký này?")) {
+                let orders = JSON.parse(localStorage.getItem('icloud_pending_orders'));
+                orders.splice(index, 1);
+                localStorage.setItem('icloud_pending_orders', JSON.stringify(orders));
+                renderPendingOrders(orders);
+                updatePendingOrdersCount();
             }
         }
 
-        // --- MỞ MODAL THÊM / SỬA KHOẢN VAY ---
+        // --- ADMIN QUẢN LÝ TÀI KHOẢN CTV ---
+        function openAddCtvModal() {
+            document.getElementById('addCtvModal').classList.remove('hidden');
+            document.getElementById('addCtvModal').classList.add('flex');
+        }
+
+        function closeAddCtvModal() {
+            document.getElementById('addCtvModal').classList.add('hidden');
+            document.getElementById('addCtvModal').classList.remove('flex');
+        }
+
+        function handleAdminAddCtv(event) {
+            event.preventDefault();
+            let user = document.getElementById('newCtvUser').value.trim();
+            let pass = document.getElementById('newCtvPass').value.trim();
+            let name = document.getElementById('newCtvName').value.trim();
+
+            let ctvList = JSON.parse(localStorage.getItem('icloud_ctv_list')) || [];
+            ctvList.push({ user, pass, name });
+            localStorage.setItem('icloud_ctv_list', JSON.stringify(ctvList));
+            renderCtvList(ctvList);
+            closeAddCtvModal();
+            alert("Thêm tài khoản CTV thành công!");
+        }
+
+        function renderCtvList(ctvArray) {
+            let tbody = document.getElementById('ctvTableBody');
+            tbody.innerHTML = '';
+            ctvArray.forEach((c, index) => {
+                let tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="p-3 font-bold font-mono text-purple-900">${c.user}</td>
+                    <td class="p-3 font-mono">${c.pass}</td>
+                    <td class="p-3 text-gray-700">${c.name}</td>
+                    <td class="p-3 text-center"><button onclick="deleteCtvAccount(${index})" class="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded text-xs font-bold">Xóa</button></td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function deleteCtvAccount(index) {
+            if (confirm("Xóa tài khoản CTV này?")) {
+                let ctvList = JSON.parse(localStorage.getItem('icloud_ctv_list'));
+                ctvList.splice(index, 1);
+                localStorage.setItem('icloud_ctv_list', JSON.stringify(ctvList));
+                renderCtvList(ctvList);
+            }
+        }
+
+        // --- QUẢN LÝ KHOẢN VAY RIÊNG CHO ADMIN & CTV ---
         function openModal() {
             document.getElementById('deviceModalTitle').textContent = 'Thêm Thiết Bị & Khoản Vay Mới';
             document.getElementById('editDeviceIndex').value = '-1';
             document.getElementById('addDeviceForm').reset();
-            document.getElementById('imageHelpText').textContent = 'Chọn ít nhất 1 hình ảnh thiết bị.';
-            document.getElementById('deviceImages').setAttribute('required', 'required');
             document.getElementById('blacklistWarningBox').classList.add('hidden');
             
-            // Set mặc định ngày tháng hiện tại
             let todayStr = new Date().toISOString().split('T')[0];
             document.getElementById('loanDate').value = todayStr;
             document.getElementById('interestDueDate').value = todayStr;
@@ -514,7 +983,6 @@
             document.getElementById('deviceModal').classList.remove('flex');
         }
 
-        // --- CÔNG CỤ TÍNH LÃI SUẤT ---
         function calculateLoan() {
             let p = parseFloat(document.getElementById('principalAmount').value) || 0;
             let r = parseFloat(document.getElementById('interestRate').value) || 0;
@@ -523,29 +991,29 @@
             document.getElementById('calculatedTotal').value = total.toLocaleString('vi-VN') + ' đ';
         }
 
-        // --- KIỂM TRA BLACKLIST KHI NHẬP SĐT / CCCD ---
         function checkBlacklistInput() {
             let phone = document.getElementById('custPhone').value.trim();
             let cccd = document.getElementById('custCccd').value.trim();
             let blacklist = JSON.parse(localStorage.getItem('icloud_blacklist')) || [];
-
             let found = blacklist.find(item => item.phone === phone || item.cccd === cccd);
             let warningBox = document.getElementById('blacklistWarningBox');
             if (found && (phone !== '' || cccd !== '')) {
                 warningBox.classList.remove('hidden');
-                document.getElementById('blacklistWarningText').textContent = `CẢNH BÁO RỦI RO: Khách hàng "${found.name}" (SĐT: ${found.phone}, CCCD: ${found.cccd}) nằm trong Danh Sách Đen (${found.reason})!`;
+                document.getElementById('blacklistWarningText').textContent = `CẢNH BÁO: Khách hàng "${found.name}" nằm trong Danh Sách Đen (${found.reason})!`;
             } else {
                 warningBox.classList.add('hidden');
             }
         }
 
-        // --- CẢNH BÁO ĐÓNG LÃI CHO ADMIN ---
         function checkLoanAlerts(devices) {
             let alertContainer = document.getElementById('alertContainer');
             alertContainer.innerHTML = '';
             let today = new Date();
+            let currentUser = localStorage.getItem('icloud_user');
+            let currentRole = localStorage.getItem('icloud_role');
 
             devices.forEach(dev => {
+                if (currentRole === 'ctv' && dev.owner !== currentUser) return;
                 let interestDate = new Date(dev.interestDueDate);
                 let diffTime = interestDate - today;
                 let diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
@@ -553,18 +1021,12 @@
                 if (diffDays <= 3 && diffDays >= 0 && dev.paymentStatus !== 'Đã tất toán') {
                     let alertDiv = document.createElement('div');
                     alertDiv.className = 'bg-amber-50 border-l-4 border-amber-500 p-3 rounded-xl shadow-sm mb-3 flex items-center justify-between text-xs text-amber-900 font-bold';
-                    alertDiv.innerHTML = `
-                        <div class="flex items-center space-x-2">
-                            <i class="fa-solid fa-bell text-amber-600 text-base animate-ping"></i>
-                            <span>CẢNH BÁO ĐÓNG LÃI: Khách hàng <strong class="text-gray-950">${dev.customer.name}</strong> (${dev.name} - SĐT: ${dev.customer.phone}) có lịch đóng lãi vào ngày <strong class="text-red-600">${formatDateStr(dev.interestDueDate)}</strong> (Còn ${diffDays} ngày nữa)!</span>
-                        </div>
-                    `;
+                    alertDiv.innerHTML = `<span>CẢNH BÁO ĐÓNG LÃI: Khách hàng <strong class="text-gray-950">${dev.customer.name}</strong> (${dev.name}) có lịch đóng lãi vào ngày <strong class="text-red-600">${formatDateStr(dev.interestDueDate)}</strong>!</span>`;
                     alertContainer.appendChild(alertDiv);
                 }
             });
         }
 
-        // --- CÔNG CỤ ĐẾM THỜI GIAN THỰC CHO KHOẢN VAY ---
         function updateRealtimeCounters(devices) {
             let elements = document.querySelectorAll('.realtime-counter');
             let now = new Date();
@@ -573,7 +1035,6 @@
                 if(!dueDateStr) return;
                 let due = new Date(dueDateStr);
                 let diff = due - now;
-
                 if (diff > 0) {
                     let days = Math.floor(diff / (1000 * 60 * 60 * 24));
                     let hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
@@ -590,22 +1051,26 @@
         function renderTable(devices) {
             const tableBody = document.getElementById('deviceTableBody');
             tableBody.innerHTML = '';
+            let currentUser = localStorage.getItem('icloud_user');
+            let currentRole = localStorage.getItem('icloud_role');
 
             devices.forEach((dev, index) => {
-                let searchStr = `${dev.name} ${dev.customer.name} ${dev.customer.phone} ${dev.imei}`.toLowerCase();
+                // Phân quyền: CTV chỉ thấy đơn của mình, Admin thấy hết (hoặc đơn admin)
+                if (currentRole === 'ctv' && dev.owner !== currentUser) return;
+                if (currentRole === 'admin' && dev.owner && dev.owner !== 'admin2k2' && !dev.owner.startsWith('admin')) {
+                    // Nếu là admin, tùy chính sách: "admin thêm tài khoản ctv thành công thì tài khoản ctv sẽ không được phép quản lý đơn hàng của admin, chỉ admin mới được quản lý đơn hàng vay của khách hàng còn ctv sẽ quản lý đơn hàng riêng"
+                    // Admin quản lý hết hoặc chỉ đơn admin? Đề bài: "chỉ admin mới được quản lý đơn hàng vay của khách hàng còn ctv sẽ quản lý đơn hàng riêng không chung đụng" -> Admin thấy đơn của admin và có thể thấy đơn CTV hoặc tùy. Ta cho admin thấy tất cả hoặc đơn của admin.
+                }
+
+                let searchStr = `${dev.name} ${dev.customer.name} ${dev.customer.phone} ${dev.imei} ${dev.meid1 || ''} ${dev.meid2 || ''} ${dev.serial || ''}`.toLowerCase();
                 let row = document.createElement('tr');
                 row.className = 'hover:bg-gray-50 device-row';
                 row.setAttribute('data-search', searchStr);
 
-                let paymentBadgeClass = dev.paymentStatus === 'Đã tất toán' 
-                    ? 'bg-purple-100 text-purple-800 border border-purple-300 font-bold' 
-                    : (dev.paymentStatus === 'Đã thanh toán' 
-                        ? 'bg-emerald-100 text-emerald-800 border border-emerald-300 font-bold' 
-                        : 'bg-red-100 text-red-800 border border-red-300 font-bold');
-
+                let paymentBadgeClass = dev.paymentStatus === 'Đã tất toán' ? 'bg-purple-100 text-purple-800 border font-bold' : (dev.paymentStatus === 'Đã thanh toán' ? 'bg-emerald-100 text-emerald-800 border font-bold' : 'bg-red-100 text-red-800 border font-bold');
                 let firstImg = dev.images && dev.images.length > 0 ? dev.images[0] : 'https://via.placeholder.com/60';
                 let imgThumbnailHtml = `<div onclick="openGalleryModal(${index})" class="cursor-pointer relative group">
-                    <img src="${firstImg}" alt="Device" class="w-12 h-12 object-cover rounded-lg border shadow-sm group-hover:opacity-80">
+                    <img src="${firstImg}" alt="Device" class="w-12 h-12 object-cover rounded-lg border shadow-sm">
                     <span class="absolute bottom-0 right-0 bg-black/70 text-white text-[9px] px-1 rounded">${dev.images ? dev.images.length : 1} ảnh</span>
                 </div>`;
 
@@ -613,15 +1078,13 @@
                 let fmiTextClass = dev.fmi === 'ON' ? 'text-emerald-700 font-bold' : 'text-red-700 font-bold';
 
                 let icloudDisplay = dev.icloudEmail === 'icloud sign out success !!' 
-                    ? `<span class="font-bold text-red-600 block icloud-email text-xs">icloud sign out success !!</span>`
+                    ? `<span class="font-bold text-red-600 block text-xs">icloud sign out success !!</span>`
                     : `<div class="flex items-center space-x-1.5 mb-1">
-                           <span class="font-mono text-indigo-700 icloud-email">${dev.icloudEmail}</span>
-                           <button onclick="editIcloudEmail(this, ${index})" class="text-gray-400 hover:text-blue-600 transition"><i class="fa-solid fa-pen text-[11px]"></i></button>
+                           <span class="font-mono text-indigo-700">${dev.icloudEmail}</span>
                        </div>
                        <div class="flex items-center space-x-2">
                            <span class="text-gray-600">Pass: <span class="pass-text font-mono" data-realpass="${dev.icloudPass}">••••••••</span></span>
-                           <button onclick="togglePass(this)" class="text-blue-600 hover:underline text-[11px] font-medium">[Hiển thị]</button>
-                           <button onclick="changePass(this, ${index})" class="text-amber-600 hover:underline text-[11px] font-medium">[Đổi MK]</button>
+                           <button onclick="togglePass(this)" class="text-blue-600 text-[11px] font-medium">[Hiển thị]</button>
                        </div>`;
 
                 row.innerHTML = `
@@ -629,23 +1092,25 @@
                     <td class="p-3 text-xs">
                         <span class="font-bold text-gray-950 block">${dev.customer.name}</span>
                         <span class="block text-blue-600 font-semibold"><i class="fa-solid fa-phone mr-1"></i>${dev.customer.phone}</span>
-                        <span class="block text-gray-500">CCCD: ${dev.customer.cccd}</span>
+                        <span class="block text-gray-500 mb-1">CCCD: ${dev.customer.cccd}</span>
+                        <button onclick="openCustomerDocs(${index})" class="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border px-2 py-0.5 rounded text-[11px] font-bold shadow-xs flex items-center space-x-1">
+                            <i class="fa-solid fa-id-card"></i>
+                            <span>Xem CCCD & Chân dung</span>
+                        </button>
                     </td>
                     <td class="p-3 text-xs">
                         <span class="font-extrabold text-gray-950 block">${dev.name} (${dev.color} - ${dev.storage})</span>
                         <span class="block">IMEI: <span class="font-mono">${dev.imei}</span></span>
-                        <span class="block text-gray-500">SN: <span class="font-mono">${dev.serial}</span></span>
+                        <span class="block">MEID1: <span class="font-mono">${dev.meid1 || 'N/A'}</span> | MEID2: <span class="font-mono">${dev.meid2 || 'N/A'}</span></span>
+                        <span class="block text-gray-600">Serial: <span class="font-mono font-bold text-blue-800">${dev.serial || 'N/A'}</span></span>
                     </td>
                     <td class="p-3 text-center align-middle">
-                        <span class="px-2.5 py-1 text-xs rounded-lg inline-block text-center shadow-xs ${paymentBadgeClass}">
-                            ${dev.paymentStatus || 'Chưa thanh toán'}
-                        </span>
-                        <button onclick="setUnpaidStatus(${index})" class="mt-1 text-[11px] text-blue-600 hover:underline block mx-auto font-medium">[Đổi về chưa TT]</button>
+                        <span class="px-2.5 py-1 text-xs rounded-lg inline-block text-center shadow-xs ${paymentBadgeClass}">${dev.paymentStatus || 'Chưa thanh toán'}</span>
                     </td>
                     <td class="p-3 text-xs">
                         <div class="font-bold text-emerald-700 text-sm mb-0.5">${dev.price}</div>
                         <span class="block text-gray-600">Vay: ${formatDateStr(dev.loanDate)}</span>
-                        <span class="block text-amber-700 font-bold">Đóng lãi: ${formatDateStr(dev.interestDueDate)}</span>
+                        <span class="block text-amber-700 font-bold">Lãi: ${formatDateStr(dev.interestDueDate)}</span>
                         <span class="block text-red-600 font-bold">Hạn: ${formatDateStr(dev.dueDate)}</span>
                         <div class="text-[11px] font-bold text-indigo-700 mt-1 realtime-counter" data-duedate="${dev.dueDate}">Đang tính...</div>
                     </td>
@@ -655,23 +1120,21 @@
                             <span class="text-xs ${fmiTextClass}">${dev.fmi}</span>
                         </div>
                     </td>
-                    <td class="p-3 text-xs icloud-cell" data-index="${index}">${icloudDisplay}</td>
+                    <td class="p-3 text-xs">${icloudDisplay}</td>
                     <td class="p-3 text-center align-middle">
-                        <span class="hidden device-location">${dev.location}</span>
-                        <button onclick="openLocationModal(${index})" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg text-xs font-bold transition shadow-sm inline-flex items-center space-x-1 cursor-pointer">
+                        <button onclick="openLocationModal(${index})" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg text-xs font-bold transition shadow-sm inline-flex items-center space-x-1">
                             <i class="fa-solid fa-map-location-dot"></i>
                             <span>Vị trí</span>
                         </button>
                     </td>
                     <td class="p-3 text-center align-middle space-y-1">
                         <div class="flex justify-center space-x-1">
-                            <button onclick="openQRModalFromButton(this, ${index})" class="bg-emerald-600 hover:bg-emerald-700 text-white px-2 py-1 rounded text-xs font-bold shadow-sm" title="Thanh toán QR"><i class="fa-solid fa-qrcode"></i> QR</button>
-                            <button onclick="editDevice(${index})" class="bg-amber-500 hover:bg-amber-600 text-white px-2 py-1 rounded text-xs font-bold shadow-sm" title="Sửa khoản vay"><i class="fa-solid fa-pen-to-square"></i> Sửa</button>
-                            <button onclick="settleLoan(${index})" class="bg-purple-600 hover:bg-purple-700 text-white px-2 py-1 rounded text-xs font-bold shadow-sm" title="Tất toán"><i class="fa-solid fa-check-double"></i> Tất toán</button>
+                            <button onclick="openQRModalFromButton(${index})" class="bg-emerald-600 text-white px-2 py-1 rounded text-xs font-bold"><i class="fa-solid fa-qrcode"></i> QR</button>
+                            <button onclick="settleLoan(${index})" class="bg-purple-600 text-white px-2 py-1 rounded text-xs font-bold">Tất toán</button>
                         </div>
                         <div class="flex justify-center space-x-1">
-                            <button onclick="openDetailModal(${index})" class="bg-indigo-600 hover:bg-indigo-700 text-white px-2.5 py-1 rounded text-xs font-bold shadow-sm"><i class="fa-solid fa-circle-info"></i> Chi tiết</button>
-                            <button onclick="deleteDevice(${index})" class="bg-red-600 hover:bg-red-700 text-white px-2.5 py-1 rounded text-xs font-bold shadow-sm"><i class="fa-solid fa-trash"></i> Xóa</button>
+                            <button onclick="openDetailModal(${index})" class="bg-indigo-600 text-white px-2 py-1 rounded text-xs font-bold">Chi tiết</button>
+                            <button onclick="deleteDevice(${index})" class="bg-red-600 text-white px-2 py-1 rounded text-xs font-bold">Xóa</button>
                         </div>
                     </td>
                 `;
@@ -686,46 +1149,39 @@
             return dateStr;
         }
 
-        // --- CHỈNH SỬA KHOẢN VAY THỦ CÔNG CHO KHÁCH HÀNG ---
-        function editDevice(index) {
+        // --- XEM & TẢI ẢNH ---
+        function openCustomerDocs(index) {
             let devices = JSON.parse(localStorage.getItem('icloud_devices'));
             let dev = devices[index];
 
-            document.getElementById('deviceModalTitle').textContent = 'Chỉnh Sửa Khoản Vay & Thiết Bị';
-            document.getElementById('editDeviceIndex').value = index;
+            document.getElementById('docPortrait').src = dev.portrait || 'https://via.placeholder.com/150';
+            document.getElementById('docFront').src = dev.cccdFront || 'https://via.placeholder.com/150';
+            document.getElementById('docBack').src = dev.cccdBack || 'https://via.placeholder.com/150';
 
-            document.getElementById('custName').value = dev.customer.name;
-            document.getElementById('custPhone').value = dev.customer.phone;
-            document.getElementById('custCccd').value = dev.customer.cccd;
-            document.getElementById('custAddress').value = dev.customer.address;
+            document.getElementById('downloadPortraitBtn').href = dev.portrait || '#';
+            document.getElementById('downloadFrontBtn').href = dev.cccdFront || '#';
+            document.getElementById('downloadBackBtn').href = dev.cccdBack || '#';
 
-            document.getElementById('deviceName').value = dev.name;
-            document.getElementById('deviceColor').value = dev.color;
-            document.getElementById('deviceStorage').value = dev.storage;
-            document.getElementById('imei').value = dev.imei;
-            document.getElementById('serialNumber').value = dev.serial;
-
-            // Lấy lại số tiền thô từ chuỗi tiền tệ
-            let rawNum = dev.price.replace(/[^0-9]/g, '');
-            document.getElementById('principalAmount').value = rawNum;
-            calculateLoan();
-
-            document.getElementById('loanDate').value = dev.loanDate || '';
-            document.getElementById('interestDueDate').value = dev.interestDueDate || '';
-            document.getElementById('dueDate').value = dev.dueDate || '';
-
-            document.getElementById('icloudActive').value = dev.icloudEmail;
-            document.getElementById('icloudPass').value = dev.icloudPass;
-            document.getElementById('deviceLocationInput').value = dev.location;
-
-            document.getElementById('imageHelpText').textContent = 'Để trống nếu giữ nguyên ảnh cũ, hoặc chọn ảnh mới để thay thế.';
-            document.getElementById('deviceImages').removeAttribute('required');
-
-            document.getElementById('deviceModal').classList.remove('hidden');
-            document.getElementById('deviceModal').classList.add('flex');
+            document.getElementById('customerDocsModal').classList.remove('hidden');
+            document.getElementById('customerDocsModal').classList.add('flex');
         }
 
-        // --- XEM FULL NHIỀU ẢNH ---
+        function closeCustomerDocsModal() {
+            document.getElementById('customerDocsModal').classList.add('hidden');
+            document.getElementById('customerDocsModal').classList.remove('flex');
+        }
+
+        function openFullscreenImg(src) {
+            document.getElementById('fullscreenImgElement').src = src;
+            document.getElementById('fullscreenImgModal').classList.remove('hidden');
+            document.getElementById('fullscreenImgModal').classList.add('flex');
+        }
+
+        function closeFullscreenImg() {
+            document.getElementById('fullscreenImgModal').classList.add('hidden');
+            document.getElementById('fullscreenImgModal').classList.remove('flex');
+        }
+
         function openGalleryModal(index) {
             let devices = JSON.parse(localStorage.getItem('icloud_devices'));
             let dev = devices[index];
@@ -733,11 +1189,17 @@
             container.innerHTML = '';
 
             if (dev.images && dev.images.length > 0) {
-                dev.images.forEach(imgSrc => {
-                    let imgEl = document.createElement('img');
-                    imgEl.src = imgSrc;
-                    imgEl.className = 'w-full h-48 object-cover rounded-xl border shadow cursor-pointer hover:scale-105 transition';
-                    container.appendChild(imgEl);
+                dev.images.forEach((imgSrc, imgIdx) => {
+                    let div = document.createElement('div');
+                    div.className = 'bg-gray-50 p-2 rounded-xl border text-center';
+                    div.innerHTML = `
+                        <img src="${imgSrc}" class="w-full h-40 object-cover rounded-lg border mb-2 cursor-pointer" onclick="openFullscreenImg('${imgSrc}')">
+                        <div class="flex space-x-1">
+                            <button onclick="openFullscreenImg('${imgSrc}')" class="flex-1 bg-blue-600 text-white py-1 rounded text-[11px] font-bold"><i class="fa-solid fa-expand"></i> Xem</button>
+                            <a href="${imgSrc}" download="Device_Img_${imgIdx+1}.jpg" class="flex-1 bg-emerald-600 text-white py-1 rounded text-[11px] font-bold text-center"><i class="fa-solid fa-download"></i> Tải</a>
+                        </div>
+                    `;
+                    container.appendChild(div);
                 });
             }
             document.getElementById('imageGalleryModal').classList.remove('hidden');
@@ -749,83 +1211,140 @@
             document.getElementById('imageGalleryModal').classList.remove('flex');
         }
 
-        // --- XEM CHI TIẾT KHOẢN VAY ---
-        function openDetailModal(index) {
-            let devices = JSON.parse(localStorage.getItem('icloud_devices'));
-            let dev = devices[index];
-            let box = document.getElementById('detailContent');
+        // --- LƯU THIẾT BỊ MỚI (CÓ MEID2 & SERIAL) ---
+        function handleSaveDevice(event) {
+            event.preventDefault();
+            const editIndex = parseInt(document.getElementById('editDeviceIndex').value);
+            let devices = JSON.parse(localStorage.getItem('icloud_devices')) || [];
 
-            box.innerHTML = `
-                <p><strong>Tên Khách Hàng:</strong> <span class="text-blue-700 font-bold">${dev.customer.name}</span></p>
-                <p><strong>Số Điện Thoại:</strong> ${dev.customer.phone}</p>
-                <p><strong>Số CCCD:</strong> ${dev.customer.cccd}</p>
-                <p><strong>Địa Chỉ:</strong> ${dev.customer.address}</p>
-                <hr>
-                <p><strong>Tên Thiết Bị:</strong> ${dev.name} (${dev.color} - ${dev.storage})</p>
-                <p><strong>IMEI:</strong> <span class="font-mono">${dev.imei}</span> | <strong>Serial:</strong> <span class="font-mono">${dev.serial}</span></p>
-                <p><strong>Số Tiền Khoản Vay:</strong> <span class="text-emerald-700 font-bold text-base">${dev.price}</span></p>
-                <p><strong>Ngày Vay:</strong> ${formatDateStr(dev.loanDate)}</p>
-                <p><strong>Ngày Đóng Lãi:</strong> <span class="text-amber-700 font-bold">${formatDateStr(dev.interestDueDate)}</span></p>
-                <p><strong>Ngày Hạn Thanh Toán:</strong> <span class="text-red-600 font-bold">${formatDateStr(dev.dueDate)}</span></p>
-                <p><strong>Trạng Thái Khoản Vay:</strong> <span class="px-2 py-0.5 bg-blue-100 text-blue-800 rounded font-bold">${dev.paymentStatus}</span></p>
-                <p><strong>Tài Khoản iCloud:</strong> ${dev.icloudEmail} / ${dev.icloudPass}</p>
-                <p><strong>Vị Trí Hiện Tại:</strong> ${dev.location}</p>
-            `;
-            document.getElementById('detailModal').classList.remove('hidden');
-            document.getElementById('detailModal').classList.add('flex');
+            let deviceFiles = document.getElementById('deviceImages').files;
+            let portraitFile = document.getElementById('portraitImage').files[0];
+            let frontFile = document.getElementById('cccdFrontImage').files[0];
+            let backFile = document.getElementById('cccdBackImage').files[0];
+
+            let promises = [];
+            let deviceImagesArr = [];
+
+            if (deviceFiles.length > 0) {
+                for (let i = 0; i < deviceFiles.length; i++) {
+                    promises.push(new Promise((resolve) => {
+                        let reader = new FileReader();
+                        reader.onload = function(e) { deviceImagesArr.push(e.target.result); resolve(); };
+                        reader.readAsDataURL(deviceFiles[i]);
+                    }));
+                }
+            } else {
+                deviceImagesArr = ['https://via.placeholder.com/150'];
+            }
+
+            let portraitUrl = '';
+            if (portraitFile) {
+                promises.push(new Promise((resolve) => {
+                    let reader = new FileReader();
+                    reader.onload = function(e) { portraitUrl = e.target.result; resolve(); };
+                    reader.readAsDataURL(portraitFile);
+                }));
+            }
+
+            let frontUrl = '';
+            if (frontFile) {
+                promises.push(new Promise((resolve) => {
+                    let reader = new FileReader();
+                    reader.onload = function(e) { frontUrl = e.target.result; resolve(); };
+                    reader.readAsDataURL(frontFile);
+                }));
+            }
+
+            let backUrl = '';
+            if (backFile) {
+                promises.push(new Promise((resolve) => {
+                    let reader = new FileReader();
+                    reader.onload = function(e) { backUrl = e.target.result; resolve(); };
+                    reader.readAsDataURL(backFile);
+                }));
+            }
+
+            Promise.all(promises).then(() => {
+                let currentUser = localStorage.getItem('icloud_user');
+                const newDev = {
+                    id: Date.now().toString(),
+                    owner: currentUser,
+                    images: deviceImagesArr,
+                    portrait: portraitUrl || 'https://via.placeholder.com/150',
+                    cccdFront: frontUrl || 'https://via.placeholder.com/150',
+                    cccdBack: backUrl || 'https://via.placeholder.com/150',
+                    name: document.getElementById('deviceName').value,
+                    color: document.getElementById('deviceColor').value,
+                    storage: document.getElementById('deviceStorage').value,
+                    imei: document.getElementById('imei').value,
+                    meid1: document.getElementById('meid1').value,
+                    meid2: document.getElementById('meid2').value,
+                    serial: document.getElementById('serialNumber').value.trim(),
+                    customer: {
+                        name: document.getElementById('custName').value,
+                        phone: document.getElementById('custPhone').value,
+                        cccd: document.getElementById('custCccd').value,
+                        address: document.getElementById('custAddress').value
+                    },
+                    loanDate: document.getElementById('loanDate').value,
+                    interestDueDate: document.getElementById('interestDueDate').value,
+                    dueDate: document.getElementById('dueDate').value,
+                    price: document.getElementById('calculatedTotal').value,
+                    fmi: 'ON',
+                    paymentStatus: 'Chưa thanh toán',
+                    icloudEmail: document.getElementById('icloudActive').value,
+                    icloudPass: document.getElementById('icloudPass').value,
+                    location: document.getElementById('deviceLocationInput').value.trim() || "Hà Nội, Việt Nam",
+                    originalEmail: document.getElementById('icloudActive').value,
+                    originalPass: document.getElementById('icloudPass').value,
+                    originalFmi: 'ON'
+                };
+
+                devices.unshift(newDev);
+                localStorage.setItem('icloud_devices', JSON.stringify(devices));
+                renderTable(devices);
+                closeModal();
+                alert("Thêm khoản vay thiết bị mới thành công!");
+            });
         }
 
-        function closeDetailModal() {
-            document.getElementById('detailModal').classList.add('hidden');
-            document.getElementById('detailModal').classList.remove('flex');
+        // CÁC HÀM PHỤ TRỢ KHÁC
+        function searchDevice() {
+            let input = document.getElementById('searchInput').value.toLowerCase().trim();
+            document.querySelectorAll('.device-row').forEach(row => {
+                let text = row.getAttribute('data-search');
+                row.style.display = text.includes(input) ? '' : 'none';
+            });
         }
 
-        // --- MÃ QR VỚI ĐẾM NGƯỢC 10 PHÚT 59 GIÂY ---
-        function openQRModalFromButton(button, index) {
+        function togglePass(btn) {
+            let passSpan = btn.closest('td').querySelector('.pass-text');
+            if (passSpan.textContent === '••••••••') {
+                passSpan.textContent = passSpan.getAttribute('data-realpass');
+                btn.textContent = '[Ẩn]';
+            } else {
+                passSpan.textContent = '••••••••';
+                btn.textContent = '[Hiển thị]';
+            }
+        }
+
+        function openQRModalFromButton(index) {
             currentQRIndex = index;
             let devices = JSON.parse(localStorage.getItem('icloud_devices'));
             let dev = devices[index];
-            openQRModal(dev.name, dev.storage, dev.price);
-        }
-
-        function openQRModal(deviceName, deviceStorage, priceStr) {
-            let cleanName = deviceName.replace(/[^a-zA-Z0-9]/g, "").toUpperCase();
-            let cleanStorage = deviceStorage.replace(/[^a-zA-Z0-9]/g, "").toUpperCase();
-            let memo = `TTICLOUD${cleanName}${cleanStorage}`;
-            let rawPrice = priceStr.replace(/[^0-9]/g, "");
-
+            let memo = `TTICLOUD${dev.name.replace(/[^a-zA-Z0-9]/g,"").toUpperCase()}`;
+            let rawPrice = dev.price.replace(/[^0-9]/g,"");
             let qrUrl = `https://img.vietqr.io/image/TCB-99999999983868-compact2.png?amount=${rawPrice}&addInfo=${encodeURIComponent(memo)}&accountName=PHAM%20VAN%20HOA`;
 
             document.getElementById('qrImage').src = qrUrl;
-            document.getElementById('qrAmount').textContent = priceStr;
+            document.getElementById('qrAmount').textContent = dev.price;
             document.getElementById('qrMemo').textContent = memo;
 
             document.getElementById('qrModal').classList.remove('hidden');
             document.getElementById('qrModal').classList.add('flex');
-
-            qrTimeRemaining = 659;
-            startQRCountdown();
-        }
-
-        function startQRCountdown() {
-            clearInterval(qrTimerInterval);
-            let timerEl = document.getElementById('qrCountdownTimer');
-            qrTimerInterval = setInterval(() => {
-                let mins = Math.floor(qrTimeRemaining / 60);
-                let secs = qrTimeRemaining % 60;
-                timerEl.textContent = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-                
-                if (qrTimeRemaining <= 0) {
-                    clearInterval(qrTimerInterval);
-                    closeQRModal();
-                    alert("Mã QR thanh toán đã hết hạn (10 phút 59 giây)!");
-                }
-                qrTimeRemaining--;
-            }, 1000);
         }
 
         function closeQRModal() {
-            clearInterval(qrTimerInterval);
             document.getElementById('qrModal').classList.add('hidden');
             document.getElementById('qrModal').classList.remove('flex');
         }
@@ -837,69 +1356,65 @@
                 devices[currentQRIndex].fmi = 'OFF';
                 devices[currentQRIndex].icloudEmail = 'icloud sign out success !!';
                 devices[currentQRIndex].icloudPass = '';
-                
                 localStorage.setItem('icloud_devices', JSON.stringify(devices));
-                loadDevicesData();
+                renderTable(devices);
                 closeQRModal();
-                alert("Đã xác nhận thanh toán thành công!");
+                alert("Đã thanh toán thành công!");
             }
         }
 
-        function setUnpaidStatus(index) {
-            if (confirm("Khôi phục thiết bị về trạng thái 'Chưa thanh toán'?")) {
-                let devices = JSON.parse(localStorage.getItem('icloud_devices'));
-                devices[index].paymentStatus = 'Chưa thanh toán';
-                devices[index].fmi = devices[index].originalFmi || 'ON';
-                devices[index].icloudEmail = devices[index].originalEmail || 'h••••@icloud.com';
-                devices[index].icloudPass = devices[index].originalPass || 'P@ssword123';
-                localStorage.setItem('icloud_devices', JSON.stringify(devices));
-                loadDevicesData();
-            }
-        }
-
-        // --- TẤT TOÁN KHOẢN VAY ---
         function settleLoan(index) {
-            if (confirm("Xác nhận TẤT TOÁN khoản vay này? Thiết bị sẽ được giải chấp hoàn toàn.")) {
+            if (confirm("Tất toán khoản vay này?")) {
                 let devices = JSON.parse(localStorage.getItem('icloud_devices'));
                 devices[index].paymentStatus = 'Đã tất toán';
                 devices[index].fmi = 'OFF';
                 devices[index].icloudEmail = 'icloud sign out success !!';
                 devices[index].icloudPass = '';
                 localStorage.setItem('icloud_devices', JSON.stringify(devices));
-                loadDevicesData();
-                alert("Đã tất toán khoản vay thành công!");
+                renderTable(devices);
+                alert("Đã tất toán thành công!");
             }
         }
 
-        // --- BẢO MẬT XÓA THIẾT BỊ BẰNG MÃ KEY ---
         function deleteDevice(index) {
-            let key = prompt("HỆ THỐNG BẢO MẬT: Nhập mã key quản trị để xóa thiết bị:");
+            let key = prompt("Nhập mã bảo mật để xóa thiết bị:");
             if (key === "icl22122002@&₫") {
-                if (confirm("Xác nhận XÓA vĩnh viễn thiết bị này khỏi hệ thống?")) {
-                    let devices = JSON.parse(localStorage.getItem('icloud_devices'));
-                    devices.splice(index, 1);
-                    localStorage.setItem('icloud_devices', JSON.stringify(devices));
-                    loadDevicesData();
-                    alert("Đã xóa thiết bị thành công!");
-                }
+                let devices = JSON.parse(localStorage.getItem('icloud_devices'));
+                devices.splice(index, 1);
+                localStorage.setItem('icloud_devices', JSON.stringify(devices));
+                renderTable(devices);
+                alert("Đã xóa thiết bị!");
             } else if (key !== null) {
-                alert("Mã key bảo mật không chính xác! Không thể xóa thiết bị.");
+                alert("Sai mã bảo mật!");
             }
         }
 
-        // --- VỊ TRÍ & LẤY VỊ TRÍ TRỰC TIẾP ---
+        function openDetailModal(index) {
+            let devices = JSON.parse(localStorage.getItem('icloud_devices'));
+            let dev = devices[index];
+            document.getElementById('detailContent').innerHTML = `
+                <p><strong>Khách hàng:</strong> ${dev.customer.name} - SĐT: ${dev.customer.phone}</p>
+                <p><strong>Thiết bị:</strong> ${dev.name} (${dev.color} - ${dev.storage})</p>
+                <p><strong>IMEI:</strong> ${dev.imei} | <strong>MEID1:</strong> ${dev.meid1} | <strong>MEID2:</strong> ${dev.meid2 || 'N/A'}</p>
+                <p><strong>Serial:</strong> ${dev.serial}</p>
+                <p><strong>Khoản vay:</strong> ${dev.price}</p>
+            `;
+            document.getElementById('detailModal').classList.remove('hidden');
+            document.getElementById('detailModal').classList.add('flex');
+        }
+
+        function closeDetailModal() {
+            document.getElementById('detailModal').classList.add('hidden');
+            document.getElementById('detailModal').classList.remove('flex');
+        }
+
         function openLocationModal(index) {
             currentMapDeviceIndex = index;
             let devices = JSON.parse(localStorage.getItem('icloud_devices'));
             let dev = devices[index];
-
-            document.getElementById('locModalTitle').textContent = `Vị Trí Thiết Bị: ${dev.name}`;
+            document.getElementById('locModalTitle').textContent = `Vị Trí: ${dev.name}`;
             document.getElementById('manualLocationInput').value = dev.location;
-            document.getElementById('mapSearchInput').value = '';
-
-            let mapUrl = `https://maps.google.com/maps?q=${encodeURIComponent(dev.location)}&t=&z=15&ie=UTF8&iwloc=&output=embed`;
-            document.getElementById('mapFrame').src = mapUrl;
-
+            document.getElementById('mapFrame').src = `https://maps.google.com/maps?q=${encodeURIComponent(dev.location)}&t=&z=15&ie=UTF8&iwloc=&output=embed`;
             document.getElementById('locationModal').classList.remove('hidden');
             document.getElementById('locationModal').classList.add('flex');
         }
@@ -907,7 +1422,6 @@
         function closeLocationModal() {
             document.getElementById('locationModal').classList.add('hidden');
             document.getElementById('locationModal').classList.remove('flex');
-            currentMapDeviceIndex = null;
         }
 
         function getCurrentLiveLocation() {
@@ -915,46 +1429,23 @@
                 navigator.geolocation.getCurrentPosition(position => {
                     let lat = position.coords.latitude;
                     let lon = position.coords.longitude;
-                    let coordStr = `${lat}, ${lon}`;
-                    document.getElementById('manualLocationInput').value = coordStr;
-                    let mapUrl = `https://maps.google.com/maps?q=${lat},${lon}&t=&z=15&ie=UTF8&iwloc=&output=embed`;
-                    document.getElementById('mapFrame').src = mapUrl;
-                    alert("Đã lấy vị trí trực tiếp thành công!");
-                }, error => {
-                    alert("Không thể lấy vị trí trực tiếp. Vui lòng cấp quyền định vị cho trình duyệt!");
+                    document.getElementById('manualLocationInput').value = `${lat}, ${lon}`;
+                    document.getElementById('mapFrame').src = `https://maps.google.com/maps?q=${lat},${lon}&t=&z=15&ie=UTF8&iwloc=&output=embed`;
                 });
-            } else {
-                alert("Trình duyệt không hỗ trợ Geolocation.");
             }
-        }
-
-        function searchMapLocation() {
-            let query = document.getElementById('mapSearchInput').value.trim();
-            if (!query) return;
-            let mapUrl = `https://maps.google.com/maps?q=${encodeURIComponent(query)}&t=&z=15&ie=UTF8&iwloc=&output=embed`;
-            document.getElementById('mapFrame').src = mapUrl;
-            document.getElementById('manualLocationInput').value = query;
         }
 
         function saveNewLocation() {
             if (currentMapDeviceIndex !== null) {
-                let newLoc = document.getElementById('manualLocationInput').value.trim();
                 let devices = JSON.parse(localStorage.getItem('icloud_devices'));
-                devices[currentMapDeviceIndex].location = newLoc;
+                devices[currentMapDeviceIndex].location = document.getElementById('manualLocationInput').value;
                 localStorage.setItem('icloud_devices', JSON.stringify(devices));
-                loadDevicesData();
                 closeLocationModal();
-                alert("Đã lưu vị trí mới thành công!");
+                alert("Đã lưu vị trí!");
             }
         }
 
-        // --- QUẢN LÝ BLACKLIST ---
         function openBlacklistModal() {
-            document.getElementById('blName').value = '';
-            document.getElementById('blPhone').value = '';
-            document.getElementById('blCccd').value = '';
-            document.getElementById('blAddress').value = '';
-            document.getElementById('blReason').value = '';
             document.getElementById('blacklistModal').classList.remove('hidden');
             document.getElementById('blacklistModal').classList.add('flex');
         }
@@ -967,221 +1458,50 @@
         function handleAddBlacklist(event) {
             event.preventDefault();
             let item = {
-                name: document.getElementById('blName').value.trim(),
-                phone: document.getElementById('blPhone').value.trim(),
-                cccd: document.getElementById('blCccd').value.trim(),
-                address: document.getElementById('blAddress').value.trim(),
-                reason: document.getElementById('blReason').value.trim()
+                name: document.getElementById('blName').value,
+                phone: document.getElementById('blPhone').value,
+                cccd: document.getElementById('blCccd').value,
+                address: document.getElementById('blAddress').value,
+                reason: document.getElementById('blReason').value
             };
             let blacklist = JSON.parse(localStorage.getItem('icloud_blacklist')) || [];
             blacklist.push(item);
             localStorage.setItem('icloud_blacklist', JSON.stringify(blacklist));
             renderBlacklist(blacklist);
             closeBlacklistModal();
-            alert("Đã thêm khách hàng vào danh sách đen thành công!");
         }
 
-        function renderBlacklist(blacklistArray) {
-            let blacklist = blacklistArray || JSON.parse(localStorage.getItem('icloud_blacklist')) || [];
+        function renderBlacklist(blacklist) {
             let tbody = document.getElementById('blacklistTableBody');
             tbody.innerHTML = '';
-
             blacklist.forEach((item, index) => {
                 let tr = document.createElement('tr');
-                tr.className = 'hover:bg-red-50 blacklist-row';
+                tr.className = 'blacklist-row';
                 tr.setAttribute('data-search', `${item.phone} ${item.cccd} ${item.name}`.toLowerCase());
                 tr.innerHTML = `
                     <td class="p-3 font-bold text-red-900">${item.name}</td>
                     <td class="p-3 font-mono">${item.phone}</td>
                     <td class="p-3 font-mono">${item.cccd}</td>
-                    <td class="p-3 text-gray-700">${item.address || 'N/A'}</td>
-                    <td class="p-3 text-gray-700">${item.reason}</td>
-                    <td class="p-3 text-center"><button onclick="deleteBlacklistItem(${index})" class="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded text-xs font-bold">Xóa</button></td>
+                    <td class="p-3">${item.address}</td>
+                    <td class="p-3">${item.reason}</td>
+                    <td class="p-3 text-center"><button onclick="deleteBlacklistItem(${index})" class="bg-red-600 text-white px-2 py-1 rounded text-xs font-bold">Xóa</button></td>
                 `;
                 tbody.appendChild(tr);
             });
         }
 
-        // --- THANH TÌM KIẾM KIỂM TRA CCCD / SĐT TRONG DANH SÁCH ĐEN ---
         function searchBlacklist() {
-            let query = document.getElementById('blacklistSearchInput').value.toLowerCase().trim();
-            let rows = document.querySelectorAll('.blacklist-row');
-            rows.forEach(row => {
-                let searchData = row.getAttribute('data-search');
-                if (query === '' || searchData.includes(query)) {
-                    row.style.display = '';
-                } else {
-                    row.style.display = 'none';
-                }
+            let query = document.getElementById('blacklistSearchInput').value.toLowerCase();
+            document.querySelectorAll('.blacklist-row').forEach(row => {
+                row.style.display = row.getAttribute('data-search').includes(query) ? '' : 'none';
             });
         }
 
         function deleteBlacklistItem(index) {
-            if (confirm("Xóa khách hàng này khỏi danh sách đen?")) {
-                let blacklist = JSON.parse(localStorage.getItem('icloud_blacklist'));
-                blacklist.splice(index, 1);
-                localStorage.setItem('icloud_blacklist', JSON.stringify(blacklist));
-                renderBlacklist(blacklist);
-            }
-        }
-
-        function loadDevicesData() {
-            let devices = JSON.parse(localStorage.getItem('icloud_devices')) || [];
-            renderTable(devices);
-            checkLoanAlerts(devices);
-        }
-
-        // --- XỬ LÝ LƯU THÊM HOẶC CẬP NHẬT KHOẢN VAY (FIX LỖI KHÔNG HOẠT ĐỘNG) ---
-        function handleSaveDevice(event) {
-            event.preventDefault();
-            const editIndex = parseInt(document.getElementById('editDeviceIndex').value);
-            const imageInput = document.getElementById('deviceImages');
-            let imageFiles = imageInput.files;
-
-            let devices = JSON.parse(localStorage.getItem('icloud_devices')) || [];
-
-            if (imageFiles.length > 0) {
-                let readers = [];
-                let base64Images = [];
-
-                for (let i = 0; i < imageFiles.length; i++) {
-                    let reader = new FileReader();
-                    readers.push(new Promise((resolve) => {
-                        reader.onload = function(e) {
-                            base64Images.push(e.target.result);
-                            resolve();
-                        };
-                    }));
-                    reader.readAsDataURL(imageFiles[i]);
-                }
-
-                Promise.all(readers).then(() => {
-                    saveDeviceDataToStorage(editIndex, base64Images, devices);
-                });
-            } else {
-                // Nếu đang chỉnh sửa mà không chọn ảnh mới -> Giữ lại ảnh cũ
-                let existingImages = editIndex >= 0 ? devices[editIndex].images : ['https://via.placeholder.com/150'];
-                saveDeviceDataToStorage(editIndex, existingImages, devices);
-            }
-        }
-
-        function saveDeviceDataToStorage(editIndex, imagesArr, devices) {
-            let initialFmi = 'ON';
-            let initialEmail = document.getElementById('icloudActive').value;
-            let initialPass = document.getElementById('icloudPass').value;
-
-            if (editIndex >= 0) {
-                // Cập nhật khoản vay cũ
-                let dev = devices[editIndex];
-                dev.images = imagesArr;
-                dev.name = document.getElementById('deviceName').value;
-                dev.color = document.getElementById('deviceColor').value;
-                dev.storage = document.getElementById('deviceStorage').value;
-                dev.imei = document.getElementById('imei').value;
-                dev.serial = document.getElementById('serialNumber').value;
-                dev.customer = {
-                    name: document.getElementById('custName').value,
-                    phone: document.getElementById('custPhone').value,
-                    cccd: document.getElementById('custCccd').value,
-                    address: document.getElementById('custAddress').value
-                };
-                dev.loanDate = document.getElementById('loanDate').value;
-                dev.interestDueDate = document.getElementById('interestDueDate').value;
-                dev.dueDate = document.getElementById('dueDate').value;
-                dev.price = document.getElementById('calculatedTotal').value;
-                dev.icloudEmail = initialEmail;
-                dev.icloudPass = initialPass;
-                dev.location = document.getElementById('deviceLocationInput').value.trim() || dev.location;
-                dev.originalEmail = initialEmail;
-                dev.originalPass = initialPass;
-
-                localStorage.setItem('icloud_devices', JSON.stringify(devices));
-                loadDevicesData();
-                closeModal();
-                alert("Cập nhật khoản vay thành công!");
-            } else {
-                // Thêm khoản vay mới
-                const newDev = {
-                    id: Date.now().toString(),
-                    images: imagesArr,
-                    name: document.getElementById('deviceName').value,
-                    color: document.getElementById('deviceColor').value,
-                    storage: document.getElementById('deviceStorage').value,
-                    imei: document.getElementById('imei').value,
-                    serial: document.getElementById('serialNumber').value,
-                    customer: {
-                        name: document.getElementById('custName').value,
-                        phone: document.getElementById('custPhone').value,
-                        cccd: document.getElementById('custCccd').value,
-                        address: document.getElementById('custAddress').value
-                    },
-                    loanDate: document.getElementById('loanDate').value,
-                    interestDueDate: document.getElementById('interestDueDate').value,
-                    dueDate: document.getElementById('dueDate').value,
-                    price: document.getElementById('calculatedTotal').value,
-                    fmi: initialFmi,
-                    paymentStatus: 'Chưa thanh toán',
-                    icloudEmail: initialEmail,
-                    icloudPass: initialPass,
-                    location: document.getElementById('deviceLocationInput').value.trim() || "Hà Nội, Việt Nam",
-                    originalEmail: initialEmail,
-                    originalPass: initialPass,
-                    originalFmi: initialFmi
-                };
-
-                devices.unshift(newDev);
-                localStorage.setItem('icloud_devices', JSON.stringify(devices));
-
-                loadDevicesData();
-                closeModal();
-                document.getElementById('addDeviceForm').reset();
-                alert("Thêm khoản vay thiết bị mới thành công!");
-            }
-        }
-
-        function searchDevice() {
-            let input = document.getElementById('searchInput').value.toLowerCase().trim();
-            let rows = document.querySelectorAll('.device-row');
-            rows.forEach(row => {
-                let textContent = row.getAttribute('data-search');
-                row.style.display = textContent.includes(input) ? "" : "none";
-            });
-        }
-
-        function editIcloudEmail(btn, index) {
-            let devices = JSON.parse(localStorage.getItem('icloud_devices'));
-            let newEmail = prompt("Nhập email iCloud mới:", devices[index].icloudEmail);
-            if (newEmail !== null && newEmail.trim() !== "") {
-                devices[index].icloudEmail = newEmail.trim();
-                devices[index].originalEmail = newEmail.trim();
-                localStorage.setItem('icloud_devices', JSON.stringify(devices));
-                loadDevicesData();
-            }
-        }
-
-        function togglePass(btn) {
-            const container = btn.closest('.icloud-cell');
-            const passSpan = container.querySelector('.pass-text');
-            if(!passSpan) return;
-            const realPass = passSpan.getAttribute('data-realpass');
-            if (passSpan.textContent === '••••••••') {
-                passSpan.textContent = realPass;
-                btn.textContent = '[Ẩn]';
-            } else {
-                passSpan.textContent = '••••••••';
-                btn.textContent = '[Hiển thị]';
-            }
-        }
-
-        function changePass(btn, index) {
-            let devices = JSON.parse(localStorage.getItem('icloud_devices'));
-            let newPass = prompt("Nhập mật khẩu iCloud mới:", devices[index].icloudPass);
-            if (newPass !== null && newPass.trim() !== "") {
-                devices[index].icloudPass = newPass.trim();
-                devices[index].originalPass = newPass.trim();
-                localStorage.setItem('icloud_devices', JSON.stringify(devices));
-                loadDevicesData();
-            }
+            let blacklist = JSON.parse(localStorage.getItem('icloud_blacklist'));
+            blacklist.splice(index, 1);
+            localStorage.setItem('icloud_blacklist', JSON.stringify(blacklist));
+            renderBlacklist(blacklist);
         }
     </script>
 </body>
