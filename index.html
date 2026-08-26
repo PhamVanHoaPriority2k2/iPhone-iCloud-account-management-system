@@ -8,13 +8,43 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome icon -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Hiệu ứng nhấp nháy cho dấu chấm trạng thái iCloud */
+        @keyframes pulse-green {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.3; transform: scale(0.85); }
+        }
+        @keyframes pulse-red {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.3; transform: scale(0.85); }
+        }
+        .dot-green {
+            animation: pulse-green 1.2s infinite ease-in-out;
+        }
+        .dot-red {
+            animation: pulse-red 1.2s infinite ease-in-out;
+        }
+        /* Hiệu ứng chữ chạy từ phải sang trái tốc độ 1.5x */
+        @keyframes marquee {
+            0% { transform: translateX(100%); }
+            100% { transform: translateX(-100%); }
+        }
+        .marquee-container {
+            overflow: hidden;
+            white-space: nowrap;
+        }
+        .marquee-text {
+            display: inline-block;
+            animation: marquee 13.33s linear infinite; /* tốc độ 1.5x chuẩn mượt */
+        }
+    </style>
 </head>
-<body class="bg-gray-100 font-sans" onload="loadDevices()">
+<body class="bg-gray-100 font-sans pb-16" onload="loadDevices()">
 
     <div class="container mx-auto p-4 max-w-7xl">
         <!-- Tiêu đề trang -->
         <header class="flex flex-col sm:flex-row justify-between items-center mb-6 bg-white p-5 rounded-xl shadow-md gap-4 border-l-4 border-blue-600">
-            <h1 class="text-xl sm:text-2xl font-extrabold text-gray-900 tracking-tight text-center sm:text-left">
+            <h1 class="text-xl sm:text-2xl font-extrabold text-gray-950 tracking-tight text-center sm:text-left">
                 <i class="fa-brands fa-apple text-blue-600 mr-2 text-2xl"></i> 
                 QUẢN LÝ MÁY VAY ICLOUD & <span class="text-blue-600 font-black tracking-wide underline decoration-blue-300">HỆ THỐNG</span> REMOTE
             </h1>
@@ -37,20 +67,21 @@
         <!-- Danh sách thiết bị -->
         <div class="bg-white rounded-xl shadow-sm overflow-hidden">
             <div class="overflow-x-auto">
-                <table class="w-full text-left border-collapse min-w-[1050px]">
+                <table class="w-full text-left border-collapse min-w-[1150px]">
                     <thead>
-                        <tr class="bg-gray-50 text-gray-600 text-xs uppercase tracking-wider border-b">
+                        <tr class="bg-gray-50 text-gray-700 text-xs uppercase tracking-wider border-b">
                             <th class="p-3 w-1/5">Hình Ảnh & Chi Tiết Máy</th>
                             <th class="p-3 w-1/6">IMEI / MEID / Serial</th>
-                            <th class="p-3">Trạng Thái Vay</th>
+                            <th class="p-3 text-center">Trạng Thái Khoản Vay</th>
+                            <th class="p-3">Ngày Vay & Hạn TT</th>
                             <th class="p-3">Giá Tiền & Thanh Toán</th>
-                            <th class="p-3">Find My iPhone</th>
+                            <th class="p-3 text-center">Find My iPhone</th>
                             <th class="p-3">Tài khoản & Mật khẩu iCloud</th>
                             <th class="p-3 text-center">Vị Trí</th>
                             <th class="p-3 text-center">Thao Tác Hệ Thống / Remote</th>
                         </tr>
                     </thead>
-                    <tbody id="deviceTableBody" class="divide-y divide-gray-200 text-sm text-gray-700">
+                    <tbody id="deviceTableBody" class="divide-y divide-gray-200 text-sm text-gray-800">
                         <!-- Dữ liệu sẽ được render tự động -->
                     </tbody>
                 </table>
@@ -58,21 +89,46 @@
         </div>
     </div>
 
-    <!-- Modal Xem Vị Trí Thiết Bị (Bản Đồ) -->
+    <!-- Footer thanh chữ chạy -->
+    <footer class="fixed bottom-0 left-0 w-full bg-white border-t shadow-inner py-2.5 px-4 z-40 marquee-container">
+        <div class="marquee-text font-black text-gray-950 text-sm sm:text-base">
+            Dịch vụ hỗ trợ tài chính qua icloud uy tín giá rẻ tận tâm nhanh gọn : Phạm Văn Hoà Priority 🇻🇳 Liên hệ 0869719526 Zalo 0869719516 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Dịch vụ hỗ trợ tài chính qua icloud uy tín giá rẻ tận tâm nhanh gọn : Phạm Văn Hoà Priority 🇻🇳 Liên hệ 0869719526 Zalo 0869719516
+        </div>
+    </footer>
+
+    <!-- Modal Xem & Cập Nhật Vị Trí Thiết Bị (Bản Đồ Google Map) -->
     <div id="locationModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center p-4 z-50">
         <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-xl relative">
             <button onclick="closeLocationModal()" class="absolute top-3 right-3 text-gray-400 hover:text-gray-600 text-lg">
                 <i class="fa-solid fa-xmark"></i>
             </button>
-            <h3 class="text-base font-bold text-gray-800 mb-1 flex items-center space-x-2">
+            <h3 class="text-base font-bold text-gray-900 mb-1 flex items-center space-x-2">
                 <i class="fa-solid fa-map-pin text-red-500"></i>
                 <span id="locModalTitle">Vị Trí Thiết Bị</span>
             </h3>
-            <p class="text-xs text-gray-500 mb-3" id="locModalAddress">Đang cập nhật địa chỉ...</p>
-            <div class="w-full h-72 rounded-xl overflow-hidden border shadow-inner mb-4">
+            <p class="text-xs text-gray-500 mb-3">Admin có thể tìm kiếm, chọn địa điểm hoặc điền thủ công bên dưới:</p>
+            
+            <!-- Ô tìm kiếm vị trí trực tiếp trên Modal bản đồ -->
+            <div class="mb-3 flex space-x-2">
+                <input type="text" id="mapSearchInput" placeholder="Nhập địa điểm cần tìm trên bản đồ (VD: Cầu Giấy, Hà Nội)..." class="w-full border rounded-lg px-3 py-1.5 text-xs focus:ring-2 focus:ring-blue-500 outline-none">
+                <button type="button" onclick="searchMapLocation()" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap shadow-sm">Tìm & Ghim</button>
+            </div>
+
+            <!-- Khung hiển thị Google Map Iframe -->
+            <div class="w-full h-64 rounded-xl overflow-hidden border shadow-inner mb-3">
                 <iframe id="mapFrame" class="w-full h-full border-0" src="" allowfullscreen="" loading="lazy"></iframe>
             </div>
-            <button onclick="closeLocationModal()" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg text-sm font-medium">Đóng Bản Đồ</button>
+
+            <!-- Ô nhập thủ công vị trí mới để lưu -->
+            <div class="mb-4">
+                <label class="block text-xs font-medium text-gray-700 mb-1">Xác nhận / Điền thủ công địa chỉ mới:</label>
+                <input type="text" id="manualLocationInput" class="w-full border rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-blue-500 outline-none" placeholder="VD: Số 10, Đường Xuân Thủy, Cầu Giấy, Hà Nội">
+            </div>
+
+            <div class="flex space-x-2">
+                <button onclick="saveNewLocation()" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white py-2 rounded-lg text-sm font-bold shadow-sm">Lưu Vị Trí Mới</button>
+                <button onclick="closeLocationModal()" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium">Đóng</button>
+            </div>
         </div>
     </div>
 
@@ -82,19 +138,19 @@
             <button onclick="closeQRModal()" class="absolute top-3 right-3 text-gray-400 hover:text-gray-600 text-lg">
                 <i class="fa-solid fa-xmark"></i>
             </button>
-            <h3 class="text-base font-bold text-gray-800 mb-1">Quét Mã VietQR Thanh Toán</h3>
-            <p class="text-xs text-gray-500 mb-3">Techcombank - Chủ tài khoản: <strong class="text-gray-700">PHAM VAN HOA</strong></p>
+            <h3 class="text-base font-bold text-gray-900 mb-1">Quét Mã VietQR Thanh Toán</h3>
+            <p class="text-xs text-gray-500 mb-3">Techcombank - Chủ tài khoản: <strong class="text-gray-800">PHAM VAN HOA</strong></p>
             <div class="bg-gray-50 border p-3 rounded-xl mb-3 flex justify-center">
                 <img id="qrImage" src="" alt="VietQR Code" class="w-64 h-64 object-contain rounded-lg shadow-inner">
             </div>
-            <div class="text-left text-xs bg-blue-50 p-3 rounded-lg space-y-1 text-blue-900 mb-4">
+            <div class="text-left text-xs bg-blue-50 p-3 rounded-lg space-y-1 text-blue-950 mb-4">
                 <p><strong>Số tài khoản:</strong> <span class="font-mono font-bold">99999999983868</span></p>
                 <p><strong>Số tiền:</strong> <span id="qrAmount" class="font-bold text-emerald-600">0 đ</span></p>
                 <p><strong>Nội dung CK:</strong> <span id="qrMemo" class="font-mono font-bold text-indigo-700"></span></p>
             </div>
             <div class="space-y-2">
-                <button onclick="confirmPaidFromModal()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-2 rounded-lg text-sm font-medium shadow">Xác nhận Khách Đã Thanh Toán</button>
-                <button onclick="closeQRModal()" class="w-full bg-gray-200 hover:bg-gray-300 text-gray-700 py-1.5 rounded-lg text-sm font-medium">Đóng</button>
+                <button onclick="confirmPaidFromModal()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-2.5 rounded-xl text-sm font-bold shadow transition">Xác Nhận Đã Thanh Toán</button>
+                <button onclick="closeQRModal()" class="w-full bg-gray-200 hover:bg-gray-300 text-gray-700 py-1.5 rounded-xl text-sm font-medium">Đóng</button>
             </div>
         </div>
     </div>
@@ -102,13 +158,13 @@
     <!-- Modal Thêm Thiết Bị -->
     <div id="deviceModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center p-4 z-50">
         <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-xl relative max-h-[90vh] overflow-y-auto">
-            <h2 class="text-lg font-bold text-gray-800 mb-4">Thêm Thiết Bị Vay Mới</h2>
+            <h2 class="text-lg font-bold text-gray-900 mb-4">Thêm Thiết Bị Vay Mới</h2>
             
             <form id="addDeviceForm" onsubmit="handleAddDevice(event)" class="space-y-3">
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     <div>
                         <label class="block text-xs font-medium text-gray-700 mb-1">Tên Thiết Bị</label>
-                        <input type="text" id="deviceName" required class="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" placeholder="VD: iPhone 11">
+                        <input type="text" id="deviceName" required class="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" placeholder="VD: iPhone 13 Pro Max">
                     </div>
                     <div>
                         <label class="block text-xs font-medium text-gray-700 mb-1">Hình Ảnh Minh Hoạ</label>
@@ -119,11 +175,11 @@
                 <div class="grid grid-cols-2 gap-2">
                     <div>
                         <label class="block text-xs font-medium text-gray-700 mb-1">Màu Sắc (Color)</label>
-                        <input type="text" id="deviceColor" required class="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" placeholder="VD: Đen, Trắng...">
+                        <input type="text" id="deviceColor" required class="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" placeholder="VD: Gold">
                     </div>
                     <div>
                         <label class="block text-xs font-medium text-gray-700 mb-1">Dung Lượng (Storage)</label>
-                        <input type="text" id="deviceStorage" required class="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" placeholder="VD: 64GB">
+                        <input type="text" id="deviceStorage" required class="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" placeholder="VD: 256GB">
                     </div>
                 </div>
                 
@@ -149,10 +205,22 @@
                     </div>
                 </div>
 
+                <!-- Thêm trường Ngày Vay & Ngày Thanh Toán -->
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block text-xs font-medium text-gray-700 mb-1">Ngày Vay</label>
+                        <input type="date" id="loanDate" required class="w-full border rounded-lg px-2 py-2 text-xs focus:ring-2 focus:ring-blue-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-700 mb-1">Ngày Hạn Thanh Toán</label>
+                        <input type="date" id="dueDate" required class="w-full border rounded-lg px-2 py-2 text-xs focus:ring-2 focus:ring-blue-500 outline-none">
+                    </div>
+                </div>
+
                 <div class="grid grid-cols-2 gap-2">
                     <div>
                         <label class="block text-xs font-medium text-gray-700 mb-1">Giá Tiền (VND)</label>
-                        <input type="text" id="devicePrice" required class="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" placeholder="VD: 8,500,000">
+                        <input type="text" id="devicePrice" required class="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" placeholder="VD: 15,500,000">
                     </div>
                     <div>
                         <label class="block text-xs font-medium text-gray-700 mb-1">Find My iPhone</label>
@@ -176,7 +244,7 @@
 
                 <div>
                     <label class="block text-xs font-medium text-gray-700 mb-1">Vị Trí Hiện Tại (Khu vực / Địa chỉ)</label>
-                    <input type="text" id="deviceLocationInput" class="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" placeholder="VD: Hà Nội hoặc Cầu Giấy, Hà Nội">
+                    <input type="text" id="deviceLocationInput" class="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" placeholder="VD: Quận Hoàn Kiếm, Hà Nội">
                 </div>
 
                 <div class="flex justify-end space-x-2 pt-3">
@@ -189,25 +257,32 @@
 
     <!-- JavaScript -->
     <script>
-        let currentQRIndex = null; // Lưu index thiết bị đang mở QR để xác nhận thanh toán
+        let currentQRIndex = null;
+        let currentMapDeviceIndex = null;
 
         const defaultDevices = [
             {
                 id: '1',
                 image: 'https://via.placeholder.com/60x60?text=iPhone',
                 name: 'iPhone 13 Pro Max',
-                color: 'Vàng (Gold)',
+                color: 'Gold',
                 storage: '256GB',
                 imei1: '351234567890123',
                 imei2: '351234567890124',
                 meid: 'A00000123',
                 serial: 'F2LX9ABC0G',
+                loanDate: '2026-06-01',
+                dueDate: '2026-07-01',
                 price: '15,500,000 đ',
                 fmi: 'ON',
-                paymentStatus: 'Chưa thanh toán', // Trạng thái khoản vay
+                paymentStatus: 'Chưa thanh toán',
                 icloudEmail: 'h••••@icloud.com',
                 icloudPass: 'P@ssword123',
-                location: 'Quận Hoàn Kiếm, Hà Nội'
+                location: 'Quận Hoàn Kiếm, Hà Nội',
+                // Lưu trữ dữ liệu gốc ban đầu để khôi phục khi bấm "Chưa thanh toán"
+                originalEmail: 'h••••@icloud.com',
+                originalPass: 'P@ssword123',
+                originalFmi: 'ON'
             }
         ];
 
@@ -230,16 +305,30 @@
                 row.className = 'hover:bg-gray-50 device-row';
                 row.setAttribute('data-search', searchStr);
 
-                // Màu sắc badge trạng thái thanh toán
+                // Badge trạng thái khoản vay vuông vức cân đối
                 let paymentBadgeClass = dev.paymentStatus === 'Đã thanh toán' 
-                    ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' 
-                    : 'bg-red-100 text-red-800 border border-red-300';
+                    ? 'bg-emerald-100 text-emerald-800 border border-emerald-300 font-bold' 
+                    : 'bg-red-100 text-red-800 border border-red-300 font-bold';
+
+                // Nút bấm thay đổi linh hoạt trạng thái Vay (Đã thanh toán <-> Chưa thanh toán)
+                let paymentButtonHtml = dev.paymentStatus === 'Đã thanh toán'
+                    ? `<button type="button" onclick="setUnpaidStatus(${index})" class="mt-1 w-full bg-amber-500 hover:bg-amber-600 text-white px-2 py-1 rounded-md text-xs font-bold transition shadow-sm flex items-center justify-center space-x-1 cursor-pointer">
+                           <i class="fa-solid fa-rotate-left"></i>
+                           <span>Chưa TT</span>
+                       </button>`
+                    : `<button type="button" onclick="openQRModalFromButton(this, ${index})" class="mt-1 w-full bg-emerald-600 hover:bg-emerald-700 text-white px-2.5 py-1 rounded-md text-xs font-bold transition shadow-sm flex items-center justify-center space-x-1 cursor-pointer">
+                           <i class="fa-solid fa-qrcode"></i>
+                           <span>Thanh toán</span>
+                       </button>`;
                 
-                // Hiển thị nội dung email iCloud hoặc thông báo thành công
+                // Hiển thị iCloud và chấm nhấp nháy xanh/đỏ tương ứng
+                let dotClass = dev.fmi === 'ON' ? 'bg-emerald-500 dot-green' : 'bg-red-500 dot-red';
+                let fmiTextClass = dev.fmi === 'ON' ? 'text-emerald-700 font-bold' : 'text-red-700 font-bold';
+
                 let icloudDisplay = dev.icloudEmail === 'icloud sign out success !!' 
-                    ? `<span class="font-bold text-emerald-600 block icloud-email">icloud sign out success !!</span>`
+                    ? `<span class="font-bold text-red-600 block icloud-email text-xs">icloud sign out success !!</span>`
                     : `<div class="flex items-center space-x-1.5 mb-1">
-                           <span class="font-mono text-indigo-600 icloud-email">${dev.icloudEmail}</span>
+                           <span class="font-mono text-indigo-700 icloud-email">${dev.icloudEmail}</span>
                            <button onclick="editIcloudEmail(this, ${index})" class="text-gray-400 hover:text-blue-600 transition" title="Sửa email">
                                <i class="fa-solid fa-pen text-[11px]"></i>
                            </button>
@@ -255,62 +344,75 @@
                         <div class="flex items-start space-x-3">
                             <img src="${dev.image}" alt="Device" class="w-12 h-12 object-cover rounded-lg border shadow-sm flex-shrink-0">
                             <div class="leading-tight">
-                                <span class="font-bold text-gray-900 block mb-1">${dev.name}</span>
-                                <span class="text-xs text-gray-500 block mb-0.5">Màu: <strong class="text-gray-700">${dev.color}</strong></span>
-                                <span class="text-xs text-gray-500 block">Dung lượng: <strong class="text-gray-700 device-storage">${dev.storage}</strong></span>
+                                <span class="font-extrabold text-gray-950 block mb-1">${dev.name}</span>
+                                <span class="text-xs text-gray-500 block mb-0.5">Màu: <strong class="text-gray-800">${dev.color}</strong></span>
+                                <span class="text-xs text-gray-500 block">Dung lượng: <strong class="text-gray-800 device-storage">${dev.storage}</strong></span>
                             </div>
                         </div>
                     </td>
                     <td class="p-3 text-xs">
-                        <span class="block"><strong>IMEI 1:</strong> <span class="imei-val">${dev.imei1}</span></span>
-                        <span class="block"><strong>IMEI 2:</strong> ${dev.imei2 || 'N/A'}</span>
-                        <span class="block text-gray-500">MEID: ${dev.meid || 'N/A'}</span>
-                        <span class="block text-gray-500">SN: ${dev.serial}</span>
+                        <span class="block"><strong>IMEI 1:</strong> <span class="imei-val font-mono">${dev.imei1}</span></span>
+                        <span class="block"><strong>IMEI 2:</strong> <span class="font-mono">${dev.imei2 || 'N/A'}</span></span>
+                        <span class="block text-gray-500">MEID: <span class="font-mono">${dev.meid || 'N/A'}</span></span>
+                        <span class="block text-gray-500">SN: <span class="font-mono">${dev.serial}</span></span>
                     </td>
-                    <td class="p-3">
-                        <span class="px-2.5 py-1 text-xs font-bold rounded-full inline-block text-center ${paymentBadgeClass}">
+                    <td class="p-3 text-center align-middle">
+                        <span class="px-2.5 py-1 text-xs rounded-lg inline-block text-center shadow-xs ${paymentBadgeClass}">
                             ${dev.paymentStatus || 'Chưa thanh toán'}
                         </span>
                     </td>
-                    <td class="p-3">
-                        <div class="font-semibold text-emerald-600 mb-1 device-price">${dev.price}</div>
-                        <button type="button" onclick="openQRModalFromButton(this, ${index})" class="bg-emerald-600 hover:bg-emerald-700 text-white px-2.5 py-1 rounded text-xs font-medium transition shadow-sm flex items-center space-x-1 cursor-pointer">
-                            <i class="fa-solid fa-qrcode"></i>
-                            <span>Thanh toán</span>
-                        </button>
+                    <td class="p-3 text-xs">
+                        <span class="block text-gray-700"><strong>Vay:</strong> ${formatDateStr(dev.loanDate)}</span>
+                        <span class="block text-red-600 font-medium"><strong>Hạn:</strong> ${formatDateStr(dev.dueDate)}</span>
                     </td>
                     <td class="p-3">
-                        <span class="px-2.5 py-1 text-xs font-bold rounded-full ${dev.fmi === 'ON' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">${dev.fmi}</span>
+                        <div class="font-bold text-emerald-700 mb-1 device-price text-sm">${dev.price}</div>
+                        ${paymentButtonHtml}
+                    </td>
+                    <td class="p-3 text-center align-middle">
+                        <div class="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-lg border shadow-xs bg-gray-50">
+                            <span class="w-2.5 h-2.5 rounded-full ${dotClass}"></span>
+                            <span class="text-xs ${fmiTextClass}">${dev.fmi}</span>
+                        </div>
                     </td>
                     <td class="p-3 text-xs icloud-cell" data-index="${index}">
                         ${icloudDisplay}
                     </td>
-                    <td class="p-3 text-center">
+                    <td class="p-3 text-center align-middle">
                         <span class="hidden device-location">${dev.location}</span>
-                        <button onclick="viewLocation(this)" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition shadow-sm inline-flex items-center space-x-1" title="Xem vị trí thiết bị">
+                        <button onclick="openLocationModal(${index})" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg text-xs font-bold transition shadow-sm inline-flex items-center space-x-1.5 cursor-pointer" title="Xem & chỉnh sửa vị trí">
                             <i class="fa-solid fa-map-location-dot"></i>
-                            <span>Xem vị trí</span>
+                            <span>Vị trí</span>
                         </button>
                     </td>
-                    <td class="p-3 text-center space-y-1.5">
-                        <div class="flex justify-center space-x-1">
-                            <button onclick="triggerRemote(${index}, '${dev.name}')" class="bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded text-xs font-medium transition shadow-sm" title="Remote iCloud & Xóa">
+                    <td class="p-3 text-center align-middle">
+                        <div class="flex justify-center space-x-1.5 mb-1.5">
+                            <button onclick="triggerRemote(${index}, '${dev.name}')" class="bg-red-600 hover:bg-red-700 text-white px-2 py-1.5 rounded-md text-xs font-bold transition shadow-sm" title="Remote iCloud & Xóa">
                                 <i class="fa-solid fa-lock"></i> Remote
                             </button>
-                            <button onclick="triggerReset(${index}, '${dev.name}')" class="bg-amber-500 hover:bg-amber-600 text-white px-2 py-1 rounded text-xs font-medium transition shadow-sm" title="Reset iPhone">
+                            <button onclick="triggerReset(${index}, '${dev.name}')" class="bg-amber-600 hover:bg-amber-700 text-white px-2 py-1.5 rounded-md text-xs font-bold transition shadow-sm" title="Reset iPhone">
                                 <i class="fa-solid fa-rotate-right"></i> Reset
                             </button>
-                            <button onclick="triggerLostMode(${index}, '${dev.name}')" class="bg-purple-500 hover:bg-purple-600 text-white px-2 py-1 rounded text-xs font-medium transition shadow-sm" title="Báo Mất & Ghi Chú">
+                            <button onclick="triggerLostMode(${index}, '${dev.name}')" class="bg-purple-600 hover:bg-purple-700 text-white px-2 py-1.5 rounded-md text-xs font-bold transition shadow-sm" title="Báo Mất">
                                 <i class="fa-solid fa-triangle-exclamation"></i> Báo Mất
                             </button>
                         </div>
-                        <button onclick="deleteDevice(${index})" class="w-full bg-gray-200 hover:bg-red-100 hover:text-red-600 text-gray-600 px-2 py-1 rounded text-xs font-medium transition">
+                        <button onclick="deleteDevice(${index})" class="w-full bg-gray-200 hover:bg-red-100 hover:text-red-700 text-gray-700 px-2.5 py-1 rounded-md text-xs font-bold transition">
                             <i class="fa-solid fa-trash mr-1"></i> Xóa khỏi hệ thống
                         </button>
                     </td>
                 `;
                 tableBody.appendChild(row);
             });
+        }
+
+        function formatDateStr(dateStr) {
+            if (!dateStr) return 'N/A';
+            let parts = dateStr.split('-');
+            if (parts.length === 3) {
+                return `${parts[2]}/${parts[1]}/${parts[0]}`;
+            }
+            return dateStr;
         }
 
         function openModal() {
@@ -325,11 +427,9 @@
 
         function openQRModalFromButton(button, index) {
             currentQRIndex = index;
-            const row = button.closest('tr');
-            const deviceName = row.querySelector('.font-bold.text-gray-900').textContent.trim();
-            const storage = row.querySelector('.device-storage') ? row.querySelector('.device-storage').textContent.trim() : "";
-            const priceStr = row.querySelector('.device-price').textContent.trim();
-            openQRModal(deviceName, storage, priceStr);
+            let devices = JSON.parse(localStorage.getItem('icloud_devices'));
+            let dev = devices[index];
+            openQRModal(dev.name, dev.storage, dev.price);
         }
 
         function openQRModal(deviceName, deviceStorage, priceStr) {
@@ -353,11 +453,10 @@
             document.getElementById('qrModal').classList.remove('flex');
         }
 
-        // Khi bấm nút xác nhận thanh toán từ Modal QR
+        // Khi bấm xác nhận thanh toán từ Modal QR -> Chuyển Đã thanh toán, FMI thành OFF đỏ, thông báo thành công
         function confirmPaidFromModal() {
             if (currentQRIndex !== null) {
                 let devices = JSON.parse(localStorage.getItem('icloud_devices'));
-                // Cập nhật trạng thái thanh toán, FMI về OFF (đỏ) và đổi ghi chú iCloud thành công
                 devices[currentQRIndex].paymentStatus = 'Đã thanh toán';
                 devices[currentQRIndex].fmi = 'OFF';
                 devices[currentQRIndex].icloudEmail = 'icloud sign out success !!';
@@ -366,19 +465,36 @@
                 localStorage.setItem('icloud_devices', JSON.stringify(devices));
                 loadDevices();
                 closeQRModal();
-                alert("Đã cập nhật: Khoản vay thành công, trạng thái iCloud OFF (Đỏ) và ghi chú 'icloud sign out success !!'");
+                alert("Đã xác nhận thanh toán! Trạng thái iCloud đã chuyển sang OFF (Đỏ nhấp nháy) và ghi chú 'icloud sign out success !!'");
             }
         }
 
-        function viewLocation(btn) {
-            const row = btn.closest('tr');
-            const deviceName = row.querySelector('.font-bold.text-gray-900').textContent.trim();
-            const addressText = row.querySelector('.device-location').textContent.trim();
+        // Nút chuyển về "Chưa thanh toán" -> Về trạng thái ban đầu
+        function setUnpaidStatus(index) {
+            if (confirm("Bạn có muốn chuyển thiết bị này về trạng thái 'Chưa thanh toán' và khôi phục thông tin ban đầu không?")) {
+                let devices = JSON.parse(localStorage.getItem('icloud_devices'));
+                devices[index].paymentStatus = 'Chưa thanh toán';
+                devices[index].fmi = devices[index].originalFmi || 'ON';
+                devices[index].icloudEmail = devices[index].originalEmail || 'h••••@icloud.com';
+                devices[index].icloudPass = devices[index].originalPass || 'P@ssword123';
 
-            document.getElementById('locModalTitle').textContent = `Vị Trí: ${deviceName}`;
-            document.getElementById('locModalAddress').textContent = `Khu vực: ${addressText}`;
+                localStorage.setItem('icloud_devices', JSON.stringify(devices));
+                loadDevices();
+                alert("Đã khôi phục thiết bị về trạng thái chưa thanh toán ban đầu!");
+            }
+        }
 
-            let mapUrl = `https://maps.google.com/maps?q=${encodeURIComponent(addressText)}&t=&z=15&ie=UTF8&iwloc=&output=embed`;
+        // --- CÁC HÀM XỬ LÝ VỊ TRÍ BẢN ĐỒ ADMIN ---
+        function openLocationModal(index) {
+            currentMapDeviceIndex = index;
+            let devices = JSON.parse(localStorage.getItem('icloud_devices'));
+            let dev = devices[index];
+
+            document.getElementById('locModalTitle').textContent = `Vị Trí Thiết Bị: ${dev.name}`;
+            document.getElementById('manualLocationInput').value = dev.location;
+            document.getElementById('mapSearchInput').value = '';
+
+            let mapUrl = `https://maps.google.com/maps?q=${encodeURIComponent(dev.location)}&t=&z=15&ie=UTF8&iwloc=&output=embed`;
             document.getElementById('mapFrame').src = mapUrl;
 
             document.getElementById('locationModal').classList.remove('hidden');
@@ -388,6 +504,40 @@
         function closeLocationModal() {
             document.getElementById('locationModal').classList.add('hidden');
             document.getElementById('locationModal').classList.remove('flex');
+            currentMapDeviceIndex = null;
+        }
+
+        // Admin tìm kiếm bất kỳ vị trí nào trên bản đồ trực tiếp
+        function searchMapLocation() {
+            let query = document.getElementById('mapSearchInput').value.trim();
+            if (!query) {
+                alert("Vui lòng nhập địa điểm cần tìm trên bản đồ!");
+                return;
+            }
+            // Cập nhật iframe bản đồ theo từ khóa tìm kiếm
+            let mapUrl = `https://maps.google.com/maps?q=${encodeURIComponent(query)}&t=&z=15&ie=UTF8&iwloc=&output=embed`;
+            document.getElementById('mapFrame').src = mapUrl;
+            // Tự động điền vào ô thủ công để chuẩn bị lưu
+            document.getElementById('manualLocationInput').value = query;
+        }
+
+        // Lưu vị trí mới do admin ghim/điền thủ công
+        function saveNewLocation() {
+            if (currentMapDeviceIndex !== null) {
+                let newLoc = document.getElementById('manualLocationInput').value.trim();
+                if (!newLoc) {
+                    alert("Địa chỉ không được để trống!");
+                    return;
+                }
+
+                let devices = JSON.parse(localStorage.getItem('icloud_devices'));
+                devices[currentMapDeviceIndex].location = newLoc;
+                localStorage.setItem('icloud_devices', JSON.stringify(devices));
+
+                loadDevices();
+                closeLocationModal();
+                alert("Đã cập nhật và lưu vị trí mới thành công!");
+            }
         }
 
         function editIcloudEmail(btn, index) {
@@ -395,6 +545,7 @@
             let newEmail = prompt("Nhập địa chỉ email iCloud mới:", devices[index].icloudEmail);
             if (newEmail !== null && newEmail.trim() !== "") {
                 devices[index].icloudEmail = newEmail.trim();
+                devices[index].originalEmail = newEmail.trim();
                 localStorage.setItem('icloud_devices', JSON.stringify(devices));
                 loadDevices();
             }
@@ -420,6 +571,7 @@
             let newPass = prompt("Nhập mật khẩu iCloud mới:", devices[index].icloudPass);
             if (newPass !== null && newPass.trim() !== "") {
                 devices[index].icloudPass = newPass.trim();
+                devices[index].originalPass = newPass.trim();
                 localStorage.setItem('icloud_devices', JSON.stringify(devices));
                 loadDevices();
             }
@@ -470,6 +622,10 @@
         }
 
         function saveNewDevice(imgUrl) {
+            let initialFmi = document.getElementById('fmi').value;
+            let initialEmail = document.getElementById('icloudActive').value;
+            let initialPass = document.getElementById('icloudPass').value;
+
             const newDev = {
                 id: Date.now().toString(),
                 image: imgUrl,
@@ -480,12 +636,17 @@
                 imei2: document.getElementById('imei2').value,
                 meid: document.getElementById('meid').value,
                 serial: document.getElementById('serialNumber').value,
+                loanDate: document.getElementById('loanDate').value,
+                dueDate: document.getElementById('dueDate').value,
                 price: document.getElementById('devicePrice').value + " đ",
-                fmi: document.getElementById('fmi').value,
+                fmi: initialFmi,
                 paymentStatus: 'Chưa thanh toán',
-                icloudEmail: document.getElementById('icloudActive').value,
-                icloudPass: document.getElementById('icloudPass').value,
-                location: document.getElementById('deviceLocationInput').value.trim() || "Hà Nội, Việt Nam"
+                icloudEmail: initialEmail,
+                icloudPass: initialPass,
+                location: document.getElementById('deviceLocationInput').value.trim() || "Hà Nội, Việt Nam",
+                originalEmail: initialEmail,
+                originalPass: initialPass,
+                originalFmi: initialFmi
             };
 
             let devices = JSON.parse(localStorage.getItem('icloud_devices')) || [];
@@ -508,14 +669,13 @@
         }
 
         function triggerRemote(index, deviceName) {
-            if (confirm(`CẢNH BÁO: Thực hiện Remote iCloud cho "${deviceName}" sẽ chuyển FMI về OFF (Đỏ) và ghi chú thông báo thành công!`)) {
+            if (confirm(`CẢNH BÁO: Thực hiện Remote iCloud cho "${deviceName}" sẽ chuyển FMI về OFF (Đỏ) và ghi chú thành công!`)) {
                 let devices = JSON.parse(localStorage.getItem('icloud_devices'));
                 devices[index].fmi = 'OFF';
                 devices[index].paymentStatus = 'Đã thanh toán';
                 devices[index].icloudEmail = 'icloud sign out success !!';
                 devices[index].icloudPass = '';
                 localStorage.setItem('icloud_devices', JSON.stringify(devices));
-                
                 loadDevices();
             }
         }
